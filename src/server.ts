@@ -24,7 +24,7 @@ const start = async () => {
         await app.register(customerRoutes);
         await app.register(centralRoutes);
         await app.register(equipamentoRoutes);
-        await app.listen({ port: 3000, host: '0.0.0.0' });
+        await app.listen({ port: 3001, host: '0.0.0.0' });
         console.log('✅ Servidor iniciado na porta 3000');
 
     } catch (err) {
