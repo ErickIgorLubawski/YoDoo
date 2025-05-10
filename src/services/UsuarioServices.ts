@@ -1,40 +1,40 @@
 // src/services/CentralServices.ts
 import { prisma } from '../config/db';
-import { CustomerUpdateDTO } from "../DTOs/CustomerDTO";
-import { CustomerBiometriaDTO } from "../DTOs/CustomerDTO";
+import { UsuarioUpdateDTO } from "../DTOs/UsuarioDTO";
+import { UsuarioDTO } from "../DTOs/UsuarioDTO";
 
-export class CustomerServices {
-  async createbiometria(data: CustomerBiometriaDTO) {
-    return await prisma.customer.create({ data });
+export class UsuarioServices {
+  async createbiometria(data: UsuarioDTO) {
+    return await prisma.usuario.create({ data });
   }
 /*   async createcustomer(data: CustomerDTO) {
     return await prismaClient.customer.create({ data });
   } */
 
   async findByIdYD(idYD: string) {
-    return await prisma.customer.findFirst({
+    return await prisma.usuario.findFirst({
       where: { idYD: idYD }
     });
   }
 
   async list() {
-    return await prisma.customer.findMany();
+    return await prisma.usuario.findMany();
   }
 
   async getById(idYD: string) {
-    return await prisma.customer.findFirst({ where: { idYD } });
+    return await prisma.usuario.findFirst({ where: { idYD } });
   }
 
-  async update(data: CustomerUpdateDTO) {
+  async update(data: UsuarioUpdateDTO) {
     const { id, name, idYD, password, begin_time, end_time, acessos, bio, base64 } = data;
 
-    return await prisma.customer.update({
+    return await prisma.usuario.update({
       where: { id },
       data: { name, idYD, password, begin_time, end_time, acessos, bio, base64  }
     });
   }
 
   async delete(id: string) {
-    return await prisma.customer.delete({ where: { id } });
+    return await prisma.usuario.delete({ where: { id } });
   }
 }

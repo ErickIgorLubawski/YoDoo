@@ -10,7 +10,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Customer{
+model Usuario{
   id          String @id @default(auto()) @map("_id") @db.ObjectId
   name        String
   idYD        String
@@ -21,7 +21,7 @@ model Customer{
   bio         String
   base64      String
 
-  @@map("customers")
+  @@map("usuario")
 } 
 
 model Central{

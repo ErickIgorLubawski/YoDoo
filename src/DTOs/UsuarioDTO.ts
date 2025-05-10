@@ -1,4 +1,4 @@
-export interface CustomerBiometriaDTO {
+export interface UsuarioDTO {
     name:        string
     idYD:        string
     password:    string
@@ -8,7 +8,7 @@ export interface CustomerBiometriaDTO {
     bio:         string
     base64:      string
   }
-  export interface CustomerUpdateDTO extends CustomerBiometriaDTO {
+  export interface UsuarioUpdateDTO extends UsuarioDTO {
     id:     string;
   }
 
