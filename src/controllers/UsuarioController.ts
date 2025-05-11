@@ -91,9 +91,31 @@ export class UsuarioController {
 
       } catch (error: any) {
         console.log(error);
-        return reply.status(404).send({ resp: error.message || "Cliente não encontrado(a)"});
+        return reply.status(404).send({ resp: "Cliente não encontrado(a)"});
     }
   }
+  async listusers(request: FastifyRequest, reply: FastifyReply) {
+
+    const { acessos } = request.body as { acessos: string };
+    console.log(acessos);
+    if (!acessos || typeof acessos !== "string" || acessos.trim() === "") {
+      return reply.status(400).send({ resp: "Campo 'acesso' é obrigatório e deve ser uma string não vazia." });
+    }
+      try {
+        const service = new UsuarioServices();
+        const usuarioacessos = await service.findByAcesso(acessos);
+        if(!usuarioacessos) {
+          return reply.status(404).send({resp: "Cliente não encontrado(a)"});
+        }
+        return reply.status(200).send({ task: "SUCESS", resp: usuarioacessos});
+
+      } catch (error: any) {
+        console.log(error);
+        return reply.status(404).send({ resp: "Cliente não encontrado(a)"});
+    }
+  }
+
+
   async  update(request: FastifyRequest, reply: FastifyReply) {
     const { name, idYD, password, begin_time, end_time, acessos, bio, base64 } = request.body as UsuarioDTO;
 
