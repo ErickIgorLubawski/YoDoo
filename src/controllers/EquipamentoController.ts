@@ -33,7 +33,7 @@ export class EquipamentoController {
     try {
         const service = new EquipamentoServices();
         const list = await service.list();
-        return reply.status(200).send({ task: "SUCESS.", data: list });
+        return reply.status(200).send({ task: "SUCESS.", resp: list });
       } catch (err: any) {
       return reply.status(500).send({ resp: err.message || "Erro ao listar equipamentos." });
     }
