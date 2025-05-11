@@ -13,7 +13,15 @@ export class UsuarioServices {
   async findByIdYD(idYD: string) {
     return await prisma.usuario.findFirst({where: { idYD: idYD }});
   }
-
+  async findByAcesso(acesso: string) {
+    return prisma.usuario.findMany({
+      where: {
+        acessos: {
+          has: acesso,
+        },
+      },
+    });
+}
   async list() {
     return await prisma.usuario.findMany();
   }
