@@ -1,6 +1,5 @@
 // src/services/CentralServices.ts
 import { prisma } from '../config/db';
-import { UsuarioUpdateDTO } from "../DTOs/UsuarioDTO";
 import { UsuarioDTO } from "../DTOs/UsuarioDTO";
 
 export class UsuarioServices {
@@ -12,9 +11,7 @@ export class UsuarioServices {
   } */
 
   async findByIdYD(idYD: string) {
-    return await prisma.usuario.findFirst({
-      where: { idYD: idYD }
-    });
+    return await prisma.usuario.findFirst({where: { idYD: idYD }});
   }
 
   async list() {
@@ -25,16 +22,16 @@ export class UsuarioServices {
     return await prisma.usuario.findFirst({ where: { idYD } });
   }
 
-  async update(data: UsuarioUpdateDTO) {
-    const { id, name, idYD, password, begin_time, end_time, acessos, bio, base64 } = data;
+  async update(data: UsuarioDTO) {
+    const { name, idYD, password, begin_time, end_time, acessos, bio, base64 } = data;
 
     return await prisma.usuario.update({
-      where: { id },
+      where: { idYD },
       data: { name, idYD, password, begin_time, end_time, acessos, bio, base64  }
     });
   }
 
-  async delete(id: string) {
-    return await prisma.usuario.delete({ where: { id } });
+  async delete(idYD: string) {
+    return await prisma.usuario.delete({ where: { idYD } });
   }
 }

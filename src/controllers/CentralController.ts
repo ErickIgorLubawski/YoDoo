@@ -11,7 +11,7 @@ export class CentralController {
 
     const { ipCentralMRD, nomeEdificio, numero, rua, bairro } = request.body as CentralDTO;
     if (!ipCentralMRD || !nomeEdificio || !numero) {
-      return reply.status(400).send({ error: "Campos obrigatórios: ipCentralMRD, nomeEdificio e numero" });
+      return reply.status(400).send({ resp: "Campos obrigatórios: ipCentralMRD, nomeEdificio e numero" });
     }
 
       try {
@@ -19,14 +19,14 @@ export class CentralController {
         const exists = await service.findByIP(ipCentralMRD);
 
         if (exists) {
-          return reply.status(409).send({ error: "Já existe uma central com esse IP." });
+          return reply.status(409).send({ resp: "Já existe uma central com esse IP." });
         }
 
         const central = await service.create({ ipCentralMRD, nomeEdificio, numero, rua, bairro });
-        return reply.status(200).send({message: "SUCESS.",data: central});
+        return reply.status(200).send({task: "SUCESS.",resp: central});
 
       } catch (error: any) {
-      return reply.status(500).send({ error: error.message || "Erro interno do servidor" });
+      return reply.status(500).send({ resp: error.message || "Erro interno do servidor" });
     }
   }
 
@@ -36,30 +36,30 @@ export class CentralController {
         const service = new CentralServices();
         const centrals = await service.list();
 
-        return reply.status(200).send({message: "SUCESS.", data: centrals});
+        return reply.status(200).send({task: "SUCESS.", resp: centrals});
 
       } catch (error: any) {
-      return reply.status(500).send({error: error.message || "Erro ao listar centrais."
+      return reply.status(500).send({task: error.message || "Erro ao listar centrais."
       });
     }
   }
 
   async getById(request: FastifyRequest, reply: FastifyReply) {
 
-    const { id } = request.params as { id: string };
+    const { idYD } = request.params as { idYD: string };
 
-      if (!id) {
+      if (!idYD) {
         return reply.status(400).send({rror: "ID é obrigatório"});
       }
 
       try {
         const service = new CentralServices();
-        const central = await service.getById(id);
+        const central = await service.getById(idYD);
 
-        return reply.status(200).send({ message: "CSUCESS.", data: central});
+        return reply.status(200).send({ task: "SUCESS.", resp: central});
 
       } catch (error: any) {
-        return reply.status(404).send({ error: error.message || "Central não encontrada"});
+        return reply.status(404).send({ task: error.message || "Central não encontrada"});
     }
   }
 
@@ -74,10 +74,10 @@ export class CentralController {
       const service = new CentralServices();
       const updated = await service.update({ id, ipCentralMRD, nomeEdificio, numero, rua, bairro });
 
-      return reply.status(200).send({ message: "SUCESS.", data: updated});
+      return reply.status(200).send({ task: "SUCESS.", resp: updated});
 
     } catch (error: any) {
-      return reply.status(404).send({ error: error.message || "Central não encontrada"});
+      return reply.status(404).send({ resp: error.message || "Central não encontrada"});
     }
   }
 
@@ -85,22 +85,22 @@ export class CentralController {
     const { id } = request.body as { id: string };
 
     if (!id) {
-      return reply.status(400).send({error: "ID é obrigatório"});
+      return reply.status(400).send({resp: "ID é obrigatório"});
     }
 
     try {
       const service = new CentralServices();
       const idcentral = await service.findByIP(id);
         if (!idcentral) {
-          return reply.status(404).send({error: "Central não encontrada"});
+          return reply.status(404).send({resp: "ERROR"});
         }
       const deleted = await service.delete(id);
 
-      return reply.status(200).send({message: "Central deletada com sucesso.",  data: deleted
+      return reply.status(200).send({resp: "SUCESS",  data: deleted
       });
       
     } catch (error: any) {
-      return reply.status(400).send({error: error.message || "Erro ao deletar central."});
+      return reply.status(400).send({resp: error.message || "Erro ao deletar central."});
     }
   }
 }

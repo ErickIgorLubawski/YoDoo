@@ -10,7 +10,7 @@ import { usuarioRoutes } from './routes/usuario-router';
 const app = Fastify({logger: true});
 
 app.setErrorHandler((error, request, reply) => {
-    reply.status(400).send({ message: error.message });
+    reply.status(400).send({ task: error.message });
 });
 
 const start = async () => {
@@ -24,8 +24,8 @@ const start = async () => {
         await app.listen({ port: 3001, host: '0.0.0.0' });
         console.log('✅ Servidor iniciado na porta 3000');
 
-    } catch (err) {
-        app.log.error(err, 'Erro ao iniciar API no servidor');
+    } catch (resp) {
+        app.log.error(resp, 'Erro ao iniciar API no servidor');
     process.exit(1);
     }
 }

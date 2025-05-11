@@ -10,19 +10,19 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Usuario{
-  id          String @id @default(auto()) @map("_id") @db.ObjectId
+model Usuario {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
   name        String
-  idYD        String
+  idYD        String   @unique           
   password    String
   begin_time  String
   end_time    String
   acessos     String[]
-  bio         String
-  base64      String
+  bio         String?
+  base64      String?
 
   @@map("usuario")
-} 
+}
 
 model Central{
   id              String @id @default(auto()) @map("_id") @db.ObjectId
@@ -36,8 +36,9 @@ model Central{
 }
 model Equipamentos{
   id              String @id @default(auto()) @map("_id") @db.ObjectId
-  device_id       Int
+  device_id       String @unique
   ip              String
+  device_hostname String?
 
   @@map("equipamentos")
 }

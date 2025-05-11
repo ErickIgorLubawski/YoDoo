@@ -1,16 +1,18 @@
 // src/services/EquipmentServices.ts
 import { prisma } from '../config/db';
-import { EquipamentoDTO, EquipamentoUpdateDTO } from "../DTOs/EquipamentoDTO";
+import { EquipamentoDTO } from "../DTOs/EquipamentoDTO";
 
 export class EquipamentoServices {
+
   async create(data: EquipamentoDTO) {
     return await prisma.equipamentos.create({ data });
   }
 
-  async findByDeviceId(device_id: number) {
+  async findByIdYD(device_id: string) {
     return await prisma.equipamentos.findFirst({
-      where: { device_id }
+      where: {device_id: device_id },
     });
+    
   }
 
   async list() {
@@ -23,19 +25,17 @@ export class EquipamentoServices {
     if (!eq) throw new Error("Equipamento não encontrado");
     return eq;
   }
-
-  async update(data: EquipamentoUpdateDTO) {
-    const { id, device_id, ip } = data;
-    if (!id) throw new Error("ID é obrigatório");
-    await this.getById(id); // valida existência
-    return prisma.equipamentos.update({
-      where: { id },
-      data: { device_id, ip }
+  async update(data: EquipamentoDTO) {
+    const { device_id, ip, device_hostname } = data;
+    
+    return await prisma.equipamentos.update({
+      where: { device_id },
+      data: { device_id, ip, device_hostname  }
     });
   }
+  
 
-  async delete(id: string) {
-    if (!id) throw new Error("ID é obrigatório");
-    return await prisma.equipamentos.delete({ where: { id } });
+  async delete(device_id: string) {
+    return await prisma.equipamentos.delete({ where: { device_id } });
   }
 }

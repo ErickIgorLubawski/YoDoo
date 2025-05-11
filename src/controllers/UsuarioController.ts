@@ -3,7 +3,6 @@ import { FastifyRequest, FastifyReply } from "fastify";
 import jwt from 'jsonwebtoken';
 import { UsuarioServices } from "../services/UsuarioServices";
 import { UsuarioDTO} from "../DTOs/UsuarioDTO";
-import { UsuarioUpdateDTO } from "../DTOs/UsuarioDTO";
 
 
 interface UsuarioToken {
@@ -18,14 +17,14 @@ export class UsuarioController {
     const { usuario, senha } = request.body as { usuario: string; senha: string };
 
     if (!usuario || !senha) {
-      return reply.status(400).send({ error: 'Usuário e senha são obrigatórios.' });
+      return reply.status(400).send({ resp: 'Usuário e senha são obrigatórios.' });
     }
 
     try { 
       if (usuario !== this.usuarioLocal.UsuarioAdminToken) {
-        return reply.status(401).send({ error: 'Usuario invalido.' });
+        return reply.status(401).send({ resp: 'Usuario invalido.' });
       } else if (senha !== this.usuarioLocal.SenhaToken) {
-        return reply.status(401).send({ error: 'Senha invalida.' });
+        return reply.status(401).send({ resp: 'Senha invalida.' });
       }
 
       const secret = process.env.JWT_SECRET as string;
@@ -35,16 +34,15 @@ export class UsuarioController {
 
       return reply.status(200).send({ token });
     } catch (error: any) {
-      return reply.status(500).send({ error: error.message || 'Erro interno do servidor.' });
+      return reply.status(500).send({ resp: error.message || 'Erro interno do servidor.' });
     }
   }
-
   async createBiometria(request: FastifyRequest, reply: FastifyReply) {
 
     
     const { name, idYD, password, begin_time, end_time, acessos, bio, base64  } = request.body as UsuarioDTO;
     if (!name || !idYD || !password || !begin_time || !end_time || !acessos) {
-      return reply.status(400).send({ error: "Campos obrigatórios: name, idYD, password, begin_time, end_time, acessos, bio, base64  " });
+      return reply.status(400).send({ resp: "Campos obrigatórios: name, idYD, password, begin_time, end_time, acessos, bio, base64  " });
     }
 
 
@@ -53,41 +51,15 @@ export class UsuarioController {
         const exists = await service.findByIdYD(idYD);
 
         if (exists) {
-          return reply.status(409).send({ error: "Esse cliente ja existe." });
+          return reply.status(409).send({ resp: "Esse cliente ja existe." });
         }
 
         const usuario = await service.createbiometria({ name, idYD, password, begin_time, end_time, acessos, bio, base64  });
-        return reply.status(200).send({message: "SUCESS.",data: usuario});
+        return reply.status(200).send({task: "SUCESS",resp: usuario});
 
       } catch (error: any) {
-      return reply.status(500).send({ error: error.message || "Erro interno do servidor" });
+      return reply.status(500).send({ resp: error.message || "Erro interno do servidor" });
     }
-  }
-  async createUsuario(request: FastifyRequest, reply: FastifyReply) {
-
-
-    const { name, idYD, password, begin_time, end_time, bio  } = request.body as UsuarioDTO;
-    if (!name || !idYD || !password || !begin_time || !end_time || ! bio ) {
-      return reply.status(400).send({ error: "Campos obrigatórios: name, idYD, password, begin_time, end_time, bio, " });
-    }
-      try {
-        const service = new UsuarioServices();
-        const createusuario = await service.findByIdYD(idYD);
-        
-        console.log(createusuario);
-
-        if (createusuario) {
-          return reply.status(200).send({ message: "Esse cliente ja existe." + createusuario });
-        }
-        console.log(createusuario);
-        //const customer = await service.createcustomer({ name, idYD, password, begin_time, end_time , bio });
-        //return reply.status(200).send({message: "Centrais encontradas com sucesso.",data: customer});
-
-      } catch (error: any) {
-      //return reply.status(500).send({ error: error.message || "Erro interno do servidor" });
-    }
-
-    return reply.status(200).send({message: "Qual validação com esse endPoint?."});
   }
   async list(request: FastifyRequest, reply: FastifyReply) {
 
@@ -95,10 +67,10 @@ export class UsuarioController {
         const service = new UsuarioServices();
         const usuario = await service.list();
 
-        return reply.status(200).send({message: "SUCESS.", data: usuario});
+        return reply.status(200).send({task: "SUCESS.", resp: usuario});
 
       } catch (error: any) {
-      return reply.status(500).send({error: error.message || "Erro ao listar clientes."
+      return reply.status(500).send({resp: error.message || "Erro ao listar clientes."
       });
     }
   }
@@ -107,57 +79,60 @@ export class UsuarioController {
     const { idYD } = request.params as { idYD: string };
     console.log(idYD);
       if (!idYD) {
-        return reply.status(400).send({error: "ID é obrigatório"});
+        return reply.status(400).send({resp: "ID é obrigatório"});
       }
       try {
         const service = new UsuarioServices();
         const usuario = await service.findByIdYD(idYD);
-        console.log(usuario);
-        return reply.status(200).send({ message: "SUCESS.", data: usuario});
+        if(!usuario) {
+          return reply.status(404).send({resp: "Cliente não encontrado(a)"});
+        }
+        return reply.status(200).send({ task: "SUCESS", resp: usuario});
 
       } catch (error: any) {
-        return reply.status(404).send({ error: error.message || "Cliente não encontrado(a)"});
+        console.log(error);
+        return reply.status(404).send({ resp: error.message || "Cliente não encontrado(a)"});
     }
   }
-  async update(request: FastifyRequest, reply: FastifyReply) {
-    const { id, name, idYD, password, begin_time, end_time, acessos, bio, base64 } = request.body as UsuarioUpdateDTO;
+  async  update(request: FastifyRequest, reply: FastifyReply) {
+    const { name, idYD, password, begin_time, end_time, acessos, bio, base64 } = request.body as UsuarioDTO;
 
     if ( !name || !idYD || !password || !begin_time || !end_time || !acessos ) {
-      return reply.status(400).send({ error: "Campos obrigatórios: id, ipCentralMRD, nomeEdificio e numero" });
+      return reply.status(400).send({ resp: "Campos obrigatórios: id, ipCentralMRD, nomeEdificio e numero" });
     }
 
     try {
       const service = new UsuarioServices();
-      const usuario = await service.update({id, name, idYD, password, begin_time, end_time, acessos, bio, base64 });
+      const usuario = await service.update({ name, idYD, password, begin_time, end_time, acessos, bio, base64 });
 
-      return reply.status(200).send({ message: "SUCESS.", data: usuario});
+      return reply.status(200).send({ task: "SUCESS.", resp: usuario});
 
     } catch (error: any) {
-      return reply.status(404).send({ error: error.message || "Cliente não encontrada"});
+      return reply.status(404).send({ resp: "Cliente não encontrada"});
     }
   }
   async delete(request: FastifyRequest, reply: FastifyReply) {
    
-    const { id } = request.body as { id: string };
+    const { idYD } = request.body as { idYD: string };
 
-    if (!id) {
-      return reply.status(400).send({error: "ID é obrigatório"});
+    if (!idYD) {
+      return reply.status(400).send({resp: "ID é obrigatório"});
     }
 
     try {
       const service = new UsuarioServices();
-      const idusuario = await service.findByIdYD(id);
+      const idYDusuario = await service.findByIdYD(idYD);
       
-        if (!idusuario) {
-          return reply.status(404).send({error: "Cliente não encontrada"});
+        if (!idYDusuario) {
+          return reply.status(404).send({resp: "Cliente não encontrada"});
         }
-      const usuario = await service.delete(id);
+      const usuario = await service.delete(idYD);
 
-      return reply.status(200).send({message: "Cliente deletada com sucesso.",  data: usuario
+      return reply.status(200).send({task: "SUCESS.",  resp: usuario
       });
       
     } catch (error: any) {
-      return reply.status(400).send({error: error.message || "Erro ao deletar cliente."});
+      return reply.status(400).send({resp: "Erro ao deletar cliente."});
     }
   }
 }
