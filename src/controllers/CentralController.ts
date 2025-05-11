@@ -2,7 +2,6 @@
 import { FastifyRequest, FastifyReply } from "fastify";
 import { CentralServices } from "../services/CentralServices";
 import { CentralDTO } from "../DTOs/CentralDTO";
-import { CentralUpdateDTO } from "../DTOs/CentralDTO";
 
 export class CentralController {
 
@@ -64,7 +63,13 @@ export class CentralController {
   }
 
   async update(request: FastifyRequest, reply: FastifyReply) {
-    const { id, ipCentralMRD, nomeEdificio, numero, rua, bairro } = request.body as CentralUpdateDTO;
+    
+    const body = request.body as any;
+    const id = body._id || body.id;
+
+    const { ipCentralMRD, nomeEdificio, numero, rua, bairro } = request.body as CentralDTO;
+
+    console.log(request.body);
 
     if (!id || !ipCentralMRD || !nomeEdificio || !numero) {
       return reply.status(400).send({ error: "Campos obrigatórios: id, ipCentralMRD, nomeEdificio e numero" });
@@ -77,30 +82,31 @@ export class CentralController {
       return reply.status(200).send({ task: "SUCESS.", resp: updated});
 
     } catch (error: any) {
-      return reply.status(404).send({ resp: error.message || "Central não encontrada"});
+      return reply.status(404).send({ resp: "Central não encontrada"});
     }
   }
 
   async delete(request: FastifyRequest, reply: FastifyReply) {
-    const { id } = request.body as { id: string };
+    const body = request.body as any;
+    const id = body._id || body.id;
 
     if (!id) {
       return reply.status(400).send({resp: "ID é obrigatório"});
     }
-
     try {
       const service = new CentralServices();
-      const idcentral = await service.findByIP(id);
-        if (!idcentral) {
-          return reply.status(404).send({resp: "ERROR"});
-        }
-      const deleted = await service.delete(id);
+      const idcentral = await service.getById(id);
 
-      return reply.status(200).send({resp: "SUCESS",  data: deleted
+      if (!idcentral) {
+        return reply.status(404).send({resp: "Central não encontrada"});
+      }
+      const deleted = await service.delete(id);
+      return reply.status(200).send({task: "SUCESS",  data: deleted
       });
       
     } catch (error: any) {
-      return reply.status(400).send({resp: error.message || "Erro ao deletar central."});
+      return reply.status(400).send({resp:"Erro ao deletar central."});
     }
   }
 }
+

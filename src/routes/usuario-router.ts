@@ -17,5 +17,6 @@ export async function usuarioRoutes(fastify: FastifyInstance, options: FastifyPl
     privateRoutes.get("/usuarios/:idYD", controller.listId.bind(controller));
     privateRoutes.delete("/usuarios", controller.delete.bind(controller));
     privateRoutes.put("/usuarios", controller.update.bind(controller));
+    
   });
 }

@@ -105,7 +105,7 @@ export class EquipamentoController {
       const equipamentoid = await service.findByIdYD(device_id); 
       console.log(equipamentoid);
       if (!equipamentoid) {
-        return reply.status(404).send({resp: "Cliente não encontrada"});
+        return reply.status(404).send({resp: "Equipamento não encontrada"});
       }
       const deleted = await service.delete(device_id);
       

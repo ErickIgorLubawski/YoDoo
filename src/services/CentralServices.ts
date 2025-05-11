@@ -1,7 +1,6 @@
 // src/services/CentralServices.ts
 import { prisma } from '../config/db';
 import { CentralDTO } from "../DTOs/CentralDTO";
-import { CentralUpdateDTO } from "../DTOs/CentralDTO";
 
 export class CentralServices {
 
@@ -24,9 +23,9 @@ export class CentralServices {
     return await prisma.central.findUnique({ where: { id } });
   }
 
-  async update(data: CentralUpdateDTO) {
+  async update(data: CentralDTO) {
     const { id, ipCentralMRD, nomeEdificio, numero, rua, bairro } = data;
-
+    console.log(id)
     return await prisma.central.update({
       where: { id },
       data: { ipCentralMRD, nomeEdificio, numero, rua, bairro }
@@ -34,6 +33,7 @@ export class CentralServices {
   }
 
   async delete(id: string) {
+    console.log(id,'testemodel')
     return await prisma.central.delete({ where: { id } });
   }
 }
