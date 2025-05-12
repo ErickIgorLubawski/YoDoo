@@ -3,6 +3,7 @@ import { FastifyRequest, FastifyReply } from "fastify";
 import jwt from 'jsonwebtoken';
 import { UsuarioServices } from "../services/UsuarioServices";
 import { UsuarioDTO} from "../DTOs/UsuarioDTO";
+import { logExecution } from "../utils/logger";
 
 
 interface UsuarioToken {
@@ -32,9 +33,13 @@ export class UsuarioController {
         expiresIn: '1d',
       });
 
-      return reply.status(200).send({ token });
+      await logExecution({class: "UsuarioController",function: "list",process: "Solicitação de Token",description: "sucess",});;
+      return reply.status(200).send({ token })
+      
     } catch (error: any) {
-      return reply.status(500).send({ resp: error.message || 'Erro interno do servidor.' });
+      await logExecution({class: "UsuarioController",function: "list",process: "Solicitação de Token",description: "error",});;
+      return reply.status(500).send({ resp: 'Erro interno do servidor.' });
+
     }
   }
   async createBiometria(request: FastifyRequest, reply: FastifyReply) {
@@ -55,10 +60,13 @@ export class UsuarioController {
         }
 
         const usuario = await service.createbiometria({ name, idYD, password, begin_time, end_time, acessos, bio, base64  });
+
+        await logExecution({class: "UsuarioController",function: "createbiometria",process: "Solicitação de Token",description: "sucess",});;
         return reply.status(200).send({task: "SUCESS",resp: usuario});
 
       } catch (error: any) {
-      return reply.status(500).send({ resp: error.message || "Erro interno do servidor" });
+        await logExecution({class: "UsuarioController",function: "createbiometria",process: "criação de biometria",description: "error",});;
+      return reply.status(500).send({ resp:"Erro ao criar usuariobiometria" });
     }
   }
   async list(request: FastifyRequest, reply: FastifyReply) {
@@ -67,11 +75,11 @@ export class UsuarioController {
         const service = new UsuarioServices();
         const usuario = await service.list();
 
+        await logExecution({class: "UsuarioController",function: "list",process: "listar usuarios",description: "sucess",});;
         return reply.status(200).send({task: "SUCESS.", resp: usuario});
-
       } catch (error: any) {
-      return reply.status(500).send({resp: error.message || "Erro ao listar clientes."
-      });
+      await logExecution({class: "UsuarioController",function: "list",process: "listar usuarios",description: "error",});;
+      return reply.status(500).send({resp: "Erro ao listar clientes."});
     }
   }
   async listId(request: FastifyRequest, reply: FastifyReply) {
@@ -87,10 +95,11 @@ export class UsuarioController {
         if(!usuario) {
           return reply.status(404).send({resp: "Cliente não encontrado(a)"});
         }
+        await logExecution({class: "UsuarioController",function: "listId",process: "listar usuario por id",description: "sucess",});;
         return reply.status(200).send({ task: "SUCESS", resp: usuario});
-
       } catch (error: any) {
         console.log(error);
+        await logExecution({class: "UsuarioController",function: "listId",process: "listar usuario por id",description: "error",});;
         return reply.status(404).send({ resp: "Cliente não encontrado(a)"});
     }
   }
@@ -107,10 +116,10 @@ export class UsuarioController {
         if(!usuarioacessos) {
           return reply.status(404).send({resp: "Cliente não encontrado(a)"});
         }
+        await logExecution({class: "UsuarioController",function: "listusers",process: "listar usuario no equipamento",description: "sucess",});;
         return reply.status(200).send({ task: "SUCESS", resp: usuarioacessos});
-
       } catch (error: any) {
-        console.log(error);
+        await logExecution({class: "UsuarioController",function: "listusers",process: "listar usuario no equipamento",description: "error",});;
         return reply.status(404).send({ resp: "Cliente não encontrado(a)"});
     }
   }
@@ -127,9 +136,10 @@ export class UsuarioController {
       const service = new UsuarioServices();
       const usuario = await service.update({ name, idYD, password, begin_time, end_time, acessos, bio, base64 });
 
+      await logExecution({class: "UsuarioController",function: "update",process: "atualizar usuario",description: "sucess",});;
       return reply.status(200).send({ task: "SUCESS.", resp: usuario});
-
     } catch (error: any) {
+      await logExecution({class: "UsuarioController",function: "update",process: "atualizar usuario",description: "error",});;
       return reply.status(404).send({ resp: "Cliente não encontrada"});
     }
   }
@@ -149,11 +159,12 @@ export class UsuarioController {
           return reply.status(404).send({resp: "Cliente não encontrada"});
         }
       const usuario = await service.delete(idYD);
-
+      await logExecution({class: "UsuarioController",function: "delete",process: "deletar usuario",description: "sucess",});;
       return reply.status(200).send({task: "SUCESS.",  resp: usuario
       });
       
     } catch (error: any) {
+      await logExecution({class: "UsuarioController",function: "delete",process: "deletar usuario",description: "error",});;
       return reply.status(400).send({resp: "Erro ao deletar cliente."});
     }
   }

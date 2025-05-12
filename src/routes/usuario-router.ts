@@ -2,6 +2,7 @@ import { FastifyInstance, FastifyPluginOptions } from "fastify";
 import { verifyToken } from "../middlewares/verifyToken";
 import { UsuarioController } from "../controllers/UsuarioController";
 
+
 export async function usuarioRoutes(fastify: FastifyInstance, options: FastifyPluginOptions) {
   const controller = new UsuarioController();
 

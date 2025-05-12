@@ -2,6 +2,7 @@
 import { FastifyRequest, FastifyReply } from "fastify";
 import { CentralServices } from "../services/CentralServices";
 import { CentralDTO } from "../DTOs/CentralDTO";
+import { logExecution } from "../utils/logger";
 
 export class CentralController {
 
@@ -22,10 +23,12 @@ export class CentralController {
         }
 
         const central = await service.create({ ipCentralMRD, nomeEdificio, numero, rua, bairro });
+        await logExecution({class: "CentralController",function: "create",process: "Criação da central",description: "sucess",});;
         return reply.status(200).send({task: "SUCESS.",resp: central});
 
       } catch (error: any) {
-      return reply.status(500).send({ resp: error.message || "Erro interno do servidor" });
+        await logExecution({class: "CentralController",function: "create",process: "Criação da central",description: "error",});;
+      return reply.status(500).send({ resp: "Erro interno do servidor" });
     }
   }
 
@@ -34,11 +37,11 @@ export class CentralController {
     try {
         const service = new CentralServices();
         const centrals = await service.list();
-
+        await logExecution({class: "CentralController",function: "list",process: "lista as centrais",description: "sucess",});;
         return reply.status(200).send({task: "SUCESS.", resp: centrals});
-
       } catch (error: any) {
-      return reply.status(500).send({task: error.message || "Erro ao listar centrais."
+        await logExecution({class: "CentralController",function: "list",process: "lista as centrais",description: "error",});;
+      return reply.status(500).send({task:  "Erro ao listar centrais."
       });
     }
   }
@@ -55,10 +58,11 @@ export class CentralController {
         const service = new CentralServices();
         const central = await service.getById(idYD);
 
+        await logExecution({class: "CentralController",function: "getById",process: "lista central por id",description: "sucess",});;
         return reply.status(200).send({ task: "SUCESS.", resp: central});
-
       } catch (error: any) {
-        return reply.status(404).send({ task: error.message || "Central não encontrada"});
+        await logExecution({class: "CentralController",function: "getById",process: "lista central por id",description: "error",});;
+        return reply.status(404).send({ task: "Central não encontrada"});
     }
   }
 
@@ -79,9 +83,10 @@ export class CentralController {
       const service = new CentralServices();
       const updated = await service.update({ id, ipCentralMRD, nomeEdificio, numero, rua, bairro });
 
+      await logExecution({class: "CentralController",function: "update",process: "atualiza central",description: "sucess",});;
       return reply.status(200).send({ task: "SUCESS.", resp: updated});
-
     } catch (error: any) {
+      await logExecution({class: "CentralController",function: "update",process: "atualiza central",description: "error",});;
       return reply.status(404).send({ resp: "Central não encontrada"});
     }
   }
@@ -101,10 +106,12 @@ export class CentralController {
         return reply.status(404).send({resp: "Central não encontrada"});
       }
       const deleted = await service.delete(id);
+      await logExecution({class: "CentralController",function: "delete",process: "deleta central",description: "sucess",});;
       return reply.status(200).send({task: "SUCESS",  data: deleted
       });
       
     } catch (error: any) {
+      await logExecution({class: "CentralController",function: "delete",process: "deleta central",description: "error",});;
       return reply.status(400).send({resp:"Erro ao deletar central."});
     }
   }

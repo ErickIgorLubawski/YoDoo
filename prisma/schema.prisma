@@ -42,3 +42,13 @@ model Equipamentos{
 
   @@map("equipamentos")
 }
+model Log {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  class       String
+  function    String
+  process     String
+  description String
+  datetime    DateTime @default(now())
+  @@map("log")
+}
+
