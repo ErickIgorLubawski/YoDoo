@@ -4,7 +4,7 @@ import { centralRoutes } from './routes/centrais-router';
 import { equipamentoRoutes } from './routes/equipamentos-router';
 import cors from '@fastify/cors';
 import { usuarioRoutes } from './routes/usuario-router';
-
+import { logExecution } from './utils/logger';
 
 
 const app = Fastify({logger: true});
@@ -23,7 +23,7 @@ const start = async () => {
         await app.register(equipamentoRoutes);
         await app.listen({ port: 3001, host: '0.0.0.0' });
         console.log('✅ Servidor iniciado na porta 3000');
-
+        await logExecution({class: 'Server',function: 'start',process: 'Inicialização do servidor',description: 'Servidor e banco iniciados com sucesso',});
     } catch (resp) {
         app.log.error(resp, 'Erro ao iniciar API no servidor');
     process.exit(1);
