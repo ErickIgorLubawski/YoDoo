@@ -20,10 +20,7 @@ export class EquipamentoServices {
   }
 
   async getById(id: string) {
-    if (!id) throw new Error("ID é obrigatório");
-    const eq = await prisma.equipamentos.findUnique({ where: { id } });
-    if (!eq) throw new Error("Equipamento não encontrado");
-    return eq;
+    return await prisma.equipamentos.findUnique({ where: { id } });
   }
   async update(data: EquipamentoDTO) {
     const { device_id, ip, device_hostname } = data;

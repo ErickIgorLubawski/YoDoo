@@ -24,7 +24,7 @@ model usuarios {
   @@map("usuarios")
 }
 
-model centrals{
+model centrais{
   id              String @id @default(auto()) @map("_id") @db.ObjectId
   ipCentralMRD    String
   nomeEdificio    String
@@ -32,7 +32,7 @@ model centrals{
   rua             String?
   bairro          String?
 
-  @@map("centrals")
+  @@map("centrais")
 }
 model equipamentos{
   id              String @id @default(auto()) @map("_id") @db.ObjectId
@@ -44,6 +44,7 @@ model equipamentos{
 }
 model Logs {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  ip          String
   class       String
   function    String
   process     String

@@ -1,5 +1,6 @@
 export interface EquipamentoDTO {
-    device_id:        string;
+    
+  device_id:        string;
     ip:               string;
     device_hostname?: string;
   }

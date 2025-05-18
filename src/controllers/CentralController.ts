@@ -7,6 +7,7 @@ import { logExecution } from "../utils/logger";
 export class CentralController {
 
   async create(request: FastifyRequest, reply: FastifyReply) {
+    const iprequest = request.ip
 
 
     const { ipCentralMRD, nomeEdificio, numero, rua, bairro } = request.body as CentralDTO;
@@ -23,32 +24,34 @@ export class CentralController {
         }
 
         const central = await service.create({ ipCentralMRD, nomeEdificio, numero, rua, bairro });
-        await logExecution({class: "CentralController",function: "create",process: "Criação da central",description: "sucess",});;
+        await logExecution({ ip: iprequest, class: "CentralController",function: "create",process: "Criação da central",description: "sucess",});;
         return reply.status(200).send({task: "SUCESS.",
           
           resp: central});
 
       } catch (error: any) {
-        await logExecution({class: "CentralController",function: "create",process: "Criação da central",description: "error",});;
+        await logExecution({ ip: iprequest, class: "CentralController",function: "create",process: "Criação da central",description: "error",});;
       return reply.status(500).send({ resp: "Erro interno do servidor" });
     }
   }
 
   async list(request: FastifyRequest, reply: FastifyReply) {
+    const iprequest = request.ip
 
     try {
         const service = new CentralServices();
         const centrals = await service.list();
-        await logExecution({class: "CentralController",function: "list",process: "lista as centrais",description: "sucess",});;
+        await logExecution({ ip: iprequest, class: "CentralController",function: "list",process: "lista as centrais",description: "sucess",});;
         return reply.status(200).send({task: "SUCESS.", resp: centrals});
       } catch (error: any) {
-        await logExecution({class: "CentralController",function: "list",process: "lista as centrais",description: "error",});;
+        await logExecution({ ip: iprequest, class: "CentralController",function: "list",process: "lista as centrais",description: "error",});;
       return reply.status(500).send({task:  "Erro ao listar centrais."
       });
     }
   }
 
   async getById(request: FastifyRequest, reply: FastifyReply) {
+    const iprequest = request.ip
 
     const { idYD } = request.params as { idYD: string };
 
@@ -60,15 +63,16 @@ export class CentralController {
         const service = new CentralServices();
         const central = await service.getById(idYD);
 
-        await logExecution({class: "CentralController",function: "getById",process: "lista central por id",description: "sucess",});;
+        await logExecution({ ip: iprequest, class: "CentralController",function: "getById",process: "lista central por id",description: "sucess",});;
         return reply.status(200).send({ task: "SUCESS.", resp: central});
       } catch (error: any) {
-        await logExecution({class: "CentralController",function: "getById",process: "lista central por id",description: "error",});;
+        await logExecution({ ip: iprequest, class: "CentralController",function: "getById",process: "lista central por id",description: "error",});;
         return reply.status(404).send({ task: "Central não encontrada"});
     }
   }
 
   async update(request: FastifyRequest, reply: FastifyReply) {
+    const iprequest = request.ip
     
     const body = request.body as any;
     const id = body._id || body.id;
@@ -85,15 +89,17 @@ export class CentralController {
       const service = new CentralServices();
       const updated = await service.update({ id, ipCentralMRD, nomeEdificio, numero, rua, bairro });
 
-      await logExecution({class: "CentralController",function: "update",process: "atualiza central",description: "sucess",});;
+      await logExecution({ ip: iprequest, class: "CentralController",function: "update",process: "atualiza central",description: "sucess",});;
       return reply.status(200).send({ task: "SUCESS.", resp: updated});
     } catch (error: any) {
-      await logExecution({class: "CentralController",function: "update",process: "atualiza central",description: "error",});;
+      await logExecution({ ip: iprequest, class: "CentralController",function: "update",process: "atualiza central",description: "error",});;
       return reply.status(404).send({ resp: "Central não encontrada"});
     }
   }
 
   async delete(request: FastifyRequest, reply: FastifyReply) {
+    const iprequest = request.ip
+
     const body = request.body as any;
     const id = body._id || body.id;
 
@@ -108,12 +114,12 @@ export class CentralController {
         return reply.status(404).send({resp: "Central não encontrada"});
       }
       const deleted = await service.delete(id);
-      await logExecution({class: "CentralController",function: "delete",process: "deleta central",description: "sucess",});;
+      await logExecution({ ip: iprequest, class: "CentralController",function: "delete",process: "deleta central",description: "sucess",});;
       return reply.status(200).send({task: "SUCESS",  data: deleted
       });
       
     } catch (error: any) {
-      await logExecution({class: "CentralController",function: "delete",process: "deleta central",description: "error",});;
+      await logExecution({ ip: iprequest, class: "CentralController",function: "delete",process: "deleta central",description: "error",});;
       return reply.status(400).send({resp:"Erro ao deletar central."});
     }
   }
