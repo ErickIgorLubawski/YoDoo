@@ -4,17 +4,17 @@ import { UsuarioDTO } from "../DTOs/UsuarioDTO";
 
 export class UsuarioServices {
   async createbiometria(data: UsuarioDTO) {
-    return await prisma.usuario.create({ data });
+    return await prisma.usuarios.create({ data });
   }
 /*   async createcustomer(data: CustomerDTO) {
     return await prismaClient.customer.create({ data });
   } */
 
   async findByIdYD(idYD: string) {
-    return await prisma.usuario.findFirst({where: { idYD: idYD }});
+    return await prisma.usuarios.findFirst({where: { idYD: idYD }});
   }
   async findByAcesso(acesso: string) {
-    return prisma.usuario.findMany({
+    return prisma.usuarios.findMany({
       where: {
         acessos: {
           has: acesso,
@@ -23,23 +23,23 @@ export class UsuarioServices {
     });
 }
   async list() {
-    return await prisma.usuario.findMany();
+    return await prisma.usuarios.findMany();
   }
 
   async getById(idYD: string) {
-    return await prisma.usuario.findFirst({ where: { idYD } });
+    return await prisma.usuarios.findFirst({ where: { idYD } });
   }
 
   async update(data: UsuarioDTO) {
     const { name, idYD, password, begin_time, end_time, acessos, bio, base64 } = data;
 
-    return await prisma.usuario.update({
+    return await prisma.usuarios.update({
       where: { idYD },
       data: { name, idYD, password, begin_time, end_time, acessos, bio, base64  }
     });
   }
 
   async delete(idYD: string) {
-    return await prisma.usuario.delete({ where: { idYD } });
+    return await prisma.usuarios.delete({ where: { idYD } });
   }
 }

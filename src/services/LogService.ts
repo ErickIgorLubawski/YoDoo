@@ -4,7 +4,7 @@ import { LogDTO } from "../DTOs/LogDTO";
 
 export class LogService {
   async createLog(data: LogDTO): Promise<void> {
-    await prisma.log.create({
+    await prisma.logs.create({
       data: {
         ...data,
         datetime: new Date(),

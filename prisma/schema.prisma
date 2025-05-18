@@ -10,7 +10,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Usuario {
+model usuarios {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   name        String
   idYD        String   @unique           
@@ -21,10 +21,10 @@ model Usuario {
   bio         String?
   base64      String?
 
-  @@map("usuario")
+  @@map("usuarios")
 }
 
-model Central{
+model centrals{
   id              String @id @default(auto()) @map("_id") @db.ObjectId
   ipCentralMRD    String
   nomeEdificio    String
@@ -34,7 +34,7 @@ model Central{
 
   @@map("centrals")
 }
-model Equipamentos{
+model equipamentos{
   id              String @id @default(auto()) @map("_id") @db.ObjectId
   device_id       String @unique
   ip              String
@@ -42,13 +42,13 @@ model Equipamentos{
 
   @@map("equipamentos")
 }
-model Log {
+model Logs {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   class       String
   function    String
   process     String
   description String
   datetime    DateTime @default(now())
-  @@map("log")
+  @@map("logs")
 }
 

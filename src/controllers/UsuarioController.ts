@@ -16,7 +16,6 @@ export class UsuarioController {
 
   async login(request: FastifyRequest, reply: FastifyReply) {
     const { usuario, senha } = request.body as { usuario: string; senha: string };
-
     if (!usuario || !senha) {
       return reply.status(400).send({ resp: 'Usuário e senha são obrigatórios.' });
     }
@@ -61,7 +60,7 @@ export class UsuarioController {
 
         const usuario = await service.createbiometria({ name, idYD, password, begin_time, end_time, acessos, bio, base64  });
 
-        await logExecution({class: "UsuarioController",function: "createbiometria",process: "Solicitação de Token",description: "sucess",});;
+        await logExecution({class: "UsuarioController",function: "createbiometria",process: "criação de biometria",description: "sucess",});;
         return reply.status(200).send({task: "SUCESS",resp: usuario});
 
       } catch (error: any) {
@@ -123,8 +122,6 @@ export class UsuarioController {
         return reply.status(404).send({ resp: "Cliente não encontrado(a)"});
     }
   }
-
-
   async  update(request: FastifyRequest, reply: FastifyReply) {
     const { name, idYD, password, begin_time, end_time, acessos, bio, base64 } = request.body as UsuarioDTO;
 

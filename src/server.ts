@@ -22,7 +22,7 @@ const start = async () => {
         await app.register(centralRoutes);
         await app.register(equipamentoRoutes);
         await app.listen({ port: 3001, host: '0.0.0.0' });
-        console.log('✅ Servidor iniciado na porta 3000');
+        console.log('✅ Servidor iniciado na porta 3001');
         await logExecution({class: 'Server',function: 'start',process: 'Inicialização do servidor',description: 'Servidor e banco iniciados com sucesso',});
     } catch (resp) {
         app.log.error(resp, 'Erro ao iniciar API no servidor');
