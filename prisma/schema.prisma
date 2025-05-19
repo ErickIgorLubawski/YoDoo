@@ -38,7 +38,10 @@ model equipamentos{
   id              String @id @default(auto()) @map("_id") @db.ObjectId
   device_id       String @unique
   ip              String
+  mac             String
+  central_id      String
   device_hostname String?
+
 
   @@map("equipamentos")
 }
