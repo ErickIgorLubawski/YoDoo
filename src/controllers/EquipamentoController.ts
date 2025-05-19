@@ -12,7 +12,7 @@ export class EquipamentoController {
 
     const iprequest = request.ip
 
-    const { device_id, ip, device_hostname } = request.body as EquipamentoDTO;
+    const { device_id, ip, device_hostname,mac,central_id } = request.body as EquipamentoDTO;
 
     if (!device_id || !ip) {
       return reply .status(400).send({ resp: "Campos obrigatórios: device_id e ip" });
@@ -27,7 +27,7 @@ export class EquipamentoController {
         return reply.status(409).send({ resp: "Equipamento com este device_id já existe." });
       }
 
-      const equipmento = await service.create({ device_id, ip, device_hostname });
+      const equipmento = await service.create({ device_id, ip, device_hostname,mac,central_id });
       await logExecution({ ip: iprequest, class: "EquipamentoController",function: "create",process: "cria equipamento",description: "sucess",});;
 
       return reply.status(201).send({ task: "SUCESS.", resp: equipmento });
@@ -90,14 +90,14 @@ export class EquipamentoController {
   }
   async update(request: FastifyRequest, reply: FastifyReply) {
     const iprequest = request.ip
-    const { device_id, ip } = request.body as EquipamentoDTO;
+    const { device_id, ip,mac,central_id } = request.body as EquipamentoDTO;
 
     if ( !device_id|| !ip) {
       return reply.status(400).send({ resp: "Campos obrigatórios: id, device_id e ip" });
     }
     try {
       const service = new EquipamentoServices();
-      const updated = await service.update({  device_id, ip });
+      const updated = await service.update({  device_id, ip,mac,central_id });
 
       await logExecution({ip: iprequest,class: "EquipamentoController",function: "update",process: "atualiza equipamento",description: "sucess",});;
       return reply.status(200).send({ task: "SUCESS.", resp: updated });

@@ -12,7 +12,6 @@ export class EquipamentoServices {
     return await prisma.equipamentos.findFirst({
       where: {device_id: device_id },
     });
-    
   }
 
   async list() {
@@ -22,6 +21,7 @@ export class EquipamentoServices {
   async getById(id: string) {
     return await prisma.equipamentos.findUnique({ where: { id } });
   }
+  
   async update(data: EquipamentoDTO) {
     const { device_id, ip, device_hostname } = data;
     
@@ -35,4 +35,17 @@ export class EquipamentoServices {
   async delete(device_id: string) {
     return await prisma.equipamentos.delete({ where: { device_id } });
   }
+  async getIpsByDeviceIds(deviceIds: string[]): Promise<string[]> {
+    const equipamentos = await prisma.equipamentos.findMany({
+        where: {
+            device_id: { in: deviceIds },
+        },
+        select: {
+            ip: true,
+        },
+    });
+
+    // Retorna somente os IPs como string[]
+    return equipamentos.map(equip => equip.ip);
+}
 }

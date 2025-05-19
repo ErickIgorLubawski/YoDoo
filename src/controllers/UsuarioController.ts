@@ -1,10 +1,10 @@
+import { UsuarioDTO } from './../DTOs/UsuarioDTO';
 // src/controllers/CentralController.ts
 import { FastifyRequest, FastifyReply } from "fastify";
 import jwt from 'jsonwebtoken';
 import { UsuarioServices } from "../services/UsuarioServices";
-import { UsuarioDTO} from "../DTOs/UsuarioDTO";
 import { logExecution } from "../utils/logger";
-
+import { RequestCentral } from "./ResquestCentral";
 
 interface UsuarioToken {
   UsuarioAdminToken: string;
@@ -51,9 +51,21 @@ export class UsuarioController {
     if (!name || !idYD || !password || !begin_time || !end_time || !acessos) {
       return reply.status(400).send({ resp: "Campos obrigatórios: name, idYD, password, begin_time, end_time, acessos, bio, base64  " });
     }
+    
+    try {
+       //   const payload = {
+       //   name:       name,
+       //     idYD:       idYD,
+       //     begin_time: begin_time,
+       //     end_time:   end_time,
+       //     acessos:    acessos,
+       //     password:   password
+       //   };
+       // console.log(payload)
+       //  const requestCentral = new RequestCentral();
+       //  const ipequipamento = await requestCentral.buscaIp(payload)
 
 
-      try {
         const service = new UsuarioServices();
         const exists = await service.findByIdYD(idYD);
 
