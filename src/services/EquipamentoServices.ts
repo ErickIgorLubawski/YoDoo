@@ -35,17 +35,16 @@ export class EquipamentoServices {
   async delete(device_id: string) {
     return await prisma.equipamentos.delete({ where: { device_id } });
   }
-  async getIpsByDeviceIds(deviceIds: string[]): Promise<string[]> {
-    const equipamentos = await prisma.equipamentos.findMany({
-        where: {
-            device_id: { in: deviceIds },
-        },
-        select: {
-            ip: true,
-        },
+  async getIpsAndCentralByDeviceIds(
+    deviceIds: string[]){
+      return prisma.equipamentos.findMany({
+      where: {
+        device_id: { in: deviceIds },},
+      select: {
+        ip: true,
+        central_id: true,
+      },
     });
+  }
 
-    // Retorna somente os IPs como string[]
-    return equipamentos.map(equip => equip.ip);
-}
 }

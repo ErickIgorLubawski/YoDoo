@@ -10,7 +10,7 @@ export class CentralController {
     const iprequest = request.ip
 
 
-    const { ipCentralMRD, nomeEdificio, numero, rua, bairro } = request.body as CentralDTO;
+    const { ipCentralMRD, nomeEdificio, numero, rua, bairro, device_id } = request.body as CentralDTO;
     if (!ipCentralMRD || !nomeEdificio || !numero) {
       return reply.status(400).send({ resp: "Campos obrigatórios: ipCentralMRD, nomeEdificio e numero" });
     }
@@ -23,7 +23,7 @@ export class CentralController {
           return reply.status(409).send({ resp: "Já existe uma central com esse IP." });
         }
 
-        const central = await service.create({ ipCentralMRD, nomeEdificio, numero, rua, bairro });
+        const central = await service.create({ ipCentralMRD, nomeEdificio, numero, rua, bairro, device_id });
         await logExecution({ ip: iprequest, class: "CentralController",function: "create",process: "Criação da central",description: "sucess",});;
         return reply.status(200).send({task: "SUCESS.",
           
@@ -77,7 +77,7 @@ export class CentralController {
     const body = request.body as any;
     const id = body._id || body.id;
 
-    const { ipCentralMRD, nomeEdificio, numero, rua, bairro } = request.body as CentralDTO;
+    const { ipCentralMRD, nomeEdificio, numero, rua, bairro,device_id } = request.body as CentralDTO;
 
     console.log(request.body);
 
@@ -87,7 +87,7 @@ export class CentralController {
 
     try {
       const service = new CentralServices();
-      const updated = await service.update({ id, ipCentralMRD, nomeEdificio, numero, rua, bairro });
+      const updated = await service.update({ id, ipCentralMRD, nomeEdificio, numero, rua, bairro,device_id });
 
       await logExecution({ ip: iprequest, class: "CentralController",function: "update",process: "atualiza central",description: "sucess",});;
       return reply.status(200).send({ task: "SUCESS.", resp: updated});

@@ -11,21 +11,22 @@ datasource db {
 }
 
 model usuarios {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  name        String
-  idYD        String   @unique           
-  password    String
-  begin_time  String
-  end_time    String
-  acessos     String[]
-  bio         String?
-  base64      String?
-
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  idYD            String   @unique           
+  password        String
+  begin_time      String
+  end_time        String
+  acessos         String[]
+  bio             String?
+  base64          String?
+  user_idCentral   Int?     @unique
   @@map("usuarios")
 }
 
 model centrais{
   id              String @id @default(auto()) @map("_id") @db.ObjectId
+  device_id       String @unique   
   ipCentralMRD    String
   nomeEdificio    String
   numero          String
@@ -39,7 +40,7 @@ model equipamentos{
   device_id       String @unique
   ip              String
   mac             String
-  central_id      String
+  central_id      String @unique
   device_hostname String?
 
 
