@@ -22,7 +22,7 @@ model usuarios {
   // armazena um JSON livre — vai guardar o array de objetos de acessos
   acessos        Json     @db.Json
 
-  @@map("usuarios")
+  @@map("usuarios_v2")
 }
 
 
