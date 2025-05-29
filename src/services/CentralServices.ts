@@ -23,6 +23,16 @@ export class CentralServices {
     return await prisma.centrais.findUnique({ where: { id } });
   }
 
+  async getByDeviceIds(deviceIds: string[]) {
+    return await prisma.centrais.findMany({
+      where: {
+        device_id: {
+          in: deviceIds
+        }
+      }
+    });
+  }
+
   async update(data: CentralDTO) {
     const { id, ipCentralMRD, nomeEdificio, numero, rua, bairro } = data;
     console.log(id)

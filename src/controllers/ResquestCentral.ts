@@ -1,73 +1,140 @@
-import { error } from "console";
+import axios from "axios";
 import { UsuarioDTO } from "../DTOs/UsuarioDTO";
-import { EquipamentoServices } from "../services/EquipamentoServices";
 import { logExecution } from "../utils/logger";
-import axios from 'axios';
-
+import { EquipamentoServices } from "../services/EquipamentoServices";
+import { CentralServices } from "../services/CentralServices";
+import { Payload, MetodoHttp } from "../DTOs/RequestCentralDTO";
 
 export class RequestCentral {
-  static buscaIp: any;
 
-  async cadastraUsuarioCentral(ipequipamento: UsuarioDTO, iprequest: string) {
-    //let user_idDevice: number | null = null;
+  async processarUsuarioCentral(data: UsuarioDTO, iprequest: string, method: MetodoHttp) {
+ 
+      const payloads = await this.buildPayloads(data, method);
+      const result = await this.sendAll(payloads.payloads, iprequest);
+      
+      const idacessos = payloads.centralIds
+      console.log('id ca dentral',idacessos)
+      return {result, idacessos}
+  }
 
-    const service = new EquipamentoServices();
+   async buildPayloads(data: UsuarioDTO, method: MetodoHttp) {
 
-    const equipamentos = await service.getIpsAndCentralByDeviceIds(ipequipamento.acessos);
-    //const equipmentos = '192.168.0.129'
+    const equipamentoSvc = new EquipamentoServices();
+    const equipamentos = await equipamentoSvc.getIpsAndCentralByDeviceIds(data.acessos);
+
     if (equipamentos.length === 0) {
-      await logExecution({ ip: iprequest, class: "RequestCentral", function: "buscaIp", process: "busca ip para requsição central", description: "error", });;
+      throw new Error("Nenhum equipamento encontrado");
     }
-    const { central_id } = equipamentos[0];
-    const ips = equipamentos.map(e => e.ip);
-    // Monta o corpo da requisição
-    const usuarioCentral = {
-      name: ipequipamento.name,
-      idYD: ipequipamento.idYD,
-      begin_time: ipequipamento.begin_time,
-      end_time: ipequipamento.end_time,
-      acessos: ips,
-      password: ipequipamento.password,
-    };
 
-    const usuariobiometria = {
-     idYD: ipequipamento.idYD,
-     acessos: ips,
-     base64:  ipequipamento.base64
+    const centralIds = Array.from(new Set(equipamentos.map(e => e.central_id)));
+    const centralMRD = new CentralServices();
+    
+    const centraisIps = await centralMRD.getByDeviceIds(centralIds);
+
+    const centralIpMap: { [centralId: string]: string } = {};
+    centraisIps.forEach(c => {centralIpMap[c.device_id] = c.ipCentralMRD;});
+    const centralMap: { [centralId: string]: string[] } = {};
+    equipamentos.forEach(eq => {
+      if (!centralMap[eq.central_id]) {
+        centralMap[eq.central_id] = [];
+      }
+      centralMap[eq.central_id].push(eq.ip);
+    });
+    const payloads: Array<Payload<any>> = [];
+
+    for (const centralId in centralMap) {
+
+      const equipamentoIps = centralMap[centralId]; // todos os IPs desse grupo
+      const baseUrl = `http://189.101.65.76:557`;  
+      // 
+      // Monta URL dinâmica
+      // const centralIp = centralIpMap[centralId]; // IP real da central
+      // Produção      
+      // const baseUrl = `http://${centralIp}:557`;   // monta URL dinâmica
+
+      if (method === "POST" ) {
+        payloads.push({
+          method,
+          endpoint: `${baseUrl}/cadastro_cl`,
+          body: {
+            name: data.name,
+            idYD: data.idYD,
+            begin_time: data.begin_time,
+            end_time: data.end_time,
+            acessos: equipamentoIps,
+            password: data.password,
+          },
+        });
+        
+      //   5.6.2) cadastro de biometria
+         payloads.push({
+           method,
+           endpoint: `${baseUrl}/cad_bio`,
+           body: {
+             idYD: data.idYD,
+             acessos: equipamentoIps,
+             base64: data.base64,
+           },
+           });
+      } if (method === "PUT") {
+        payloads.push({
+          method,
+          endpoint: `${baseUrl}/atualiza_cl`,
+          body: {
+            name: data.name,
+            idYD: data.idYD,
+            begin_time: data.begin_time,
+            end_time: data.end_time,
+            acessos: equipamentoIps,
+            password: data.password
+          } 
+        });
+      } if (method === "DELETE") {
+        payloads.push({
+          method,
+          endpoint: `${baseUrl}/del_cl`,
+          body: {
+            idYD: data.idYD,
+            acessos: equipamentoIps,
+          } ,
+        });
+
+      }
     }
-    console.log('payloadcentral',usuarioCentral)
-    console.log('payloadbiometria',usuariobiometria)
+    return {payloads ,centralIds};
+  }
+  private async sendAll(payloads: Array<Payload<any>>, iprequest: string) {
+   
+    const tasks: any[] = []; 
+    let user_idDevice = 0;
+  
+    console.log(payloads)
 
-    // Monta a URL dinamicamente a partir do central_id
-    // Exemplo: central_id = "192.168.0.129", porta fixa 557
-    //URL PROD
-    //const url = `http://${central_id}:557/cadastro_cl`;
-    //URL SERV TESTE
-    const url = `http://mrdprototype.ddns.net:557/cadastro_cl`;
-    try {
-      const responseusuariocentral = await axios.post(url, usuarioCentral, {
-        headers: { 'Content-Type': 'application/json' },
-      });
-      const responseusuariobiometria = await axios.post(url, usuariobiometria, {
-        headers: { 'Content-Type': 'application/json' },
-      });
-
-      const user_idDevice = responseusuariocentral.data.resp.acessos[0].user_idDevice;
-        await logExecution({ ip: iprequest, class: 'RequestCentral', function: 'buscaIp', process: 'envio para central', description: 'Cadastrado na central' });
-      
-        console.log('print do retono',user_idDevice)
-      
-        if( user_idDevice > 0){
-          return { sucess: true, status: 200, user_idDevice };
+    for (const request of payloads) {
+      try {
+        const resp = await axios({
+          url: request.endpoint,
+          method: request.method,
+          data: request.body, 
+        });
+        console.log('response da requisicão: ', resp)
+        const data = resp.data;
+        if (data.task){
+           tasks.push(data.task);
+           tasks.toString()
         }
-        else{
-          return { sucess: false, status: 200, user_idDevice };
+        
+
+        if (request.method === 'POST'||request.method === 'PUT') {
+          user_idDevice = resp.data.resp.acessos[0].user_idDevice;
         }
 
-
-    } catch (err: any) {
-        await logExecution({ ip: iprequest, class: 'RequestCentral', function: 'buscaIp', process: 'envio para central', description: 'usuario cadastraado na central' });
-        return {success: true}
+        await logExecution({ip: iprequest, class: "RequestCentral",function: "sendAll",process: `${request.method} -> ${request.endpoint}`,description: `Status ${resp.status}`, });
+      } catch (err: any) {
+        await logExecution({ip: iprequest, class: "RequestCentral",function: "sendAll", process: `Erro ${request.method} -> ${request.endpoint}`,description: err.message,});
+        return {success: false, tasks, user_idDevice };
+      }
     }
+    return {success: true, tasks,  user_idDevice};
   }
 }

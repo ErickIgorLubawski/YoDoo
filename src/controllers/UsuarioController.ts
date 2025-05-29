@@ -1,5 +1,4 @@
-import { UsuarioDTO } from './../DTOs/UsuarioDTO';
-// src/controllers/CentralController.ts
+import { UsuarioDTO,UsuarioIdCentralDTO } from './../DTOs/UsuarioDTO';
 import { FastifyRequest, FastifyReply } from "fastify";
 import jwt from 'jsonwebtoken';
 import { UsuarioServices } from "../services/UsuarioServices";
@@ -44,50 +43,62 @@ export class UsuarioController {
     }
   }
   async createBiometria(request: FastifyRequest, reply: FastifyReply) {
-    const ipusuario = request.ip
-
     
-    const { name, idYD, password, begin_time, end_time, acessos, bio, base64,user_idCentral  } = request.body as UsuarioDTO;
-    if (!name || !idYD || !password || !begin_time || !end_time || !acessos) {
+    const ipusuario = request.ip
+    const UsuarioDTO = request.body as UsuarioDTO;
+
+    if (!UsuarioDTO.name || !UsuarioDTO.idYD || !UsuarioDTO.password || !UsuarioDTO.begin_time || !UsuarioDTO.end_time || !UsuarioDTO.acessos) {
       return reply.status(400).send({ task: "ERROR",resp: 'campos não preenchidos' });
     }
     
     try {
-          const payload = {
-          name:       name,
-          idYD:       idYD,
-          begin_time: begin_time,
-          end_time:   end_time,
-          acessos:    acessos,
-          password:   password,
-          base64:     base64
+          const serviceCentral = new RequestCentral();
+          const centralResult = await serviceCentral.processarUsuarioCentral(UsuarioDTO, ipusuario, "POST");
+
+          const user_idCentral = centralResult.result.user_idDevice?.toString()
+          const responseCentral = centralResult.result.tasks.toString()
+          const idcentral = centralResult.idacessos
+
+          console.log(idcentral)
+
+          if(responseCentral === "PARSE"){
+            return reply.status(200).send({ task: "PARSE",resp: 'usuario ja cadastrado na central' });
+          }
+          if(responseCentral === "ERROR" || !user_idCentral){
+            return reply.status(500).send({ task: "ERROR",resp: 'equipamento não encontrada' });
+          }
+          const UsuarioIdCentral: UsuarioIdCentralDTO = {
+            ...UsuarioDTO,
+            user_idCentral,
+            idcentral: idcentral.join(','),
           };
-         const requestCentral = new RequestCentral();
-         const responseCentral = await requestCentral.cadastraUsuarioCentral(payload, ipusuario);
 
-         let user_idCentral = responseCentral.user_idDevice;
-         console.log('print do user controller',user_idCentral)
+        //   const UsuarioIdCentral: UsuarioIdCentralDTO = {
+        //   name: 'erick',
+        //   idYD: '2',
+        //   password: '548837',
+        //   begin_time: '12-06-2025 20:00:00',
+        //   end_time: '13-06-2025 20:01:00',
+        //   acessos: [ '5' ],
+        //   bio: 'testede bio',
+        //   base64: '/9j/4AA',
+        //   user_idCentral: '178',
+        //   idcentral: '3'
+        // }
           
-        //   if (user_idCentral >=0) {
-        //    return reply.status(409).send({task: "ERROR",resp: 'erro ao cadastrar na central'});
-        //  }
-          //se cadastrado pega id da central pra enviar ao banco 
           const service = new UsuarioServices();
-          const exists = await service.findByIdYD(idYD);
+          const exists = await service.findByIdYD(UsuarioDTO.idYD);
+          if(!exists) {
+            const usuario = await service.createUserAcess(UsuarioIdCentral);
+              await logExecution({ ip: ipusuario, class: "UsuarioController",function: "createbiometria", process: "criação de biometria",description: "sucess",});;
+            return reply.status(200).send({task: "SUCESS",resp: usuario});
+            }
+            const usuario = await service.createAccesses(UsuarioIdCentral);
+              await logExecution({ ip: ipusuario, class: "UsuarioController",function: "createbiometria", process: "criação de biometria",description: "sucess",});;
+            return reply.status(200).send({task: "SUCESS",resp: usuario});
           
-        if (exists) {
-          return reply.status(409).send({ task: "ERROR",resp: 'usuario ja existe' });
-        }
-
-        const usuario = await service.createbiometria({ name, idYD, password, begin_time, end_time, acessos, bio, base64,user_idCentral  });
-
-        console.log(usuario)
-
-        await logExecution({ ip: ipusuario, class: "UsuarioController",function: "createbiometria", process: "criação de biometria",description: "sucess",});;
-        return reply.status(200).send({task: "SUCESS",resp: usuario});
-
-      } catch (error: any) {
-        await logExecution({ ip: ipusuario, class: "UsuarioController",function: "createbiometria",process: "criação de biometria",description: "error",});;
+          } catch (error: any) {
+            await logExecution({ ip: ipusuario, class: "UsuarioController",function: "createbiometria",process: "criação de biometria",description: "error",});;
       return reply.status(500).send({ task: "ERROR",resp: 'falha ao cadastar' });
     }
   }
@@ -131,53 +142,80 @@ export class UsuarioController {
     const ipusuario = request.ip
 
     const { acessos } = request.body as { acessos: string };
-    console.log(acessos);
     if (!acessos || typeof acessos !== "string" || acessos.trim() === "") {
       return reply.status(400).send({ task: "ERROR",resp: 'campos obrigatorio' });
     }
       try {
         const service = new UsuarioServices();
-        const usuarioacessos = await service.findByAcesso(acessos);
-        if(!usuarioacessos) {
-          return reply.status(404).send({resp: "Cliente não encontrado(a)"});
-        }
+        // const usuarioacessos = await service.findByAcesso(acessos);
+        // if(!usuarioacessos) {
+        //   return reply.status(404).send({resp: "Cliente não encontrado(a)"});
+        // }
         await logExecution({ ip: ipusuario, class: "UsuarioController",function: "listusers",process: "listar usuario no equipamento",description: "sucess",});;
-        return reply.status(200).send({ task: "SUCESS", resp: usuarioacessos});
+        // return reply.status(200).send({ task: "SUCESS", resp: usuarioacessos});
       } catch (error: any) {
         await logExecution({ ip: ipusuario, class: "UsuarioController",function: "listusers",process: "listar usuario no equipamento",description: "error",});;
         return reply.status(404).send({ task: "ERROR",resp: 'cliente não encontrado'});
     }
   }
   async  update(request: FastifyRequest, reply: FastifyReply) {
+
     const ipusuario = request.ip
+    const Usuario = request.body as UsuarioDTO;
 
-    const { name, idYD, password, begin_time, end_time, acessos, bio, base64 } = request.body as UsuarioDTO;
-
-    if ( !name || !idYD || !password || !begin_time || !end_time || !acessos ) {
+    if ( !Usuario.name || !Usuario.idYD || !Usuario.password || !Usuario.begin_time || !Usuario.end_time || !Usuario.acessos ) {
       return reply.status(400).send({ task: "ERROR",resp: 'preenhcer todos os campos'});
     }
-
     try {
+      const serviceCentral = new RequestCentral();
+      const centralResult = await serviceCentral.processarUsuarioCentral(Usuario, ipusuario, "PUT");
+
+      const user_idCentral = centralResult.result.user_idDevice?.toString()
+      const responseCentral = centralResult.result.tasks.toString()
+      const idcentral = centralResult.idacessos
+      const UsuarioIdCentral: UsuarioIdCentralDTO = {
+        ...Usuario,
+        user_idCentral,
+        idcentral: idcentral.join(','),
+      };
+      if(responseCentral === "ERROR"){
+        return reply.status(500).send({ task: "ERROR",resp: 'equipamento não encontrada' });
+      }
       const service = new UsuarioServices();
-      const usuario = await service.update({ name, idYD, password, begin_time, end_time, acessos, bio, base64 });
+      const usuario = await service.updateAcesso(UsuarioIdCentral);
+      console.log('usuario',usuario)
 
       await logExecution({ ip: ipusuario, class: "UsuarioController",function: "update",process: "atualizar usuario",description: "sucess",});;
       return reply.status(200).send({ task: "SUCESS.", resp: usuario});
     } catch (error: any) {
       await logExecution({ ip: ipusuario, class: "UsuarioController",function: "update",process: "atualizar usuario",description: "error",});;
-      return reply.status(404).send({ task: "ERROR",resp: 'cliente não encontrado'});
+      return reply.status(500).send({ task: "ERROR",resp: 'cliente ou acesso não encontrado'});
     }
   }
   async delete(request: FastifyRequest, reply: FastifyReply) {
-    const ipusuario = request.ip
-   
-    const { idYD } = request.body as { idYD: string };
 
+    const ipusuario = request.ip
+    const { idYD, acessos } = request.body as UsuarioDTO;
     if (!idYD) {
       return reply.status(400).send({resp: "ID é obrigatório"});
     }
 
     try {
+      const payload = {
+        idYD:       idYD,
+        acessos:    acessos,
+        name:       "", // Provide a default or fetch the actual value
+        password:   "", // Provide a default or fetch the actual value
+        begin_time: "", // Provide a default or fetch the actual value
+        end_time:   ""  // Provide a default or fetch the actual value
+        };
+      const serviceCentral = new RequestCentral();
+      const centralResult = await serviceCentral.processarUsuarioCentral(payload, ipusuario, "DELETE");
+      const responseCentral = centralResult.result.tasks.toString()
+      if(responseCentral === "ERROR"){
+        return reply.status(200).send({ task: "ERROR",resp: 'equipamento não encontrada' });
+      }
+
       const service = new UsuarioServices();
       const idYDusuario = await service.findByIdYD(idYD);
       

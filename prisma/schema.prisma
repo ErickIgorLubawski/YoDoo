@@ -11,18 +11,20 @@ datasource db {
 }
 
 model usuarios {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  name            String
-  idYD            String   @unique           
-  password        String
-  begin_time      String
-  end_time        String
-  acessos         String[]
-  bio             String?
-  base64          String?
-  user_idCentral   Int?     @unique
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  name           String
+  idYD           String   @unique
+  password       String
+  bio            String?
+  base64         String?
+  user_idCentral Int?     @unique
+
+  // armazena um JSON livre — vai guardar o array de objetos de acessos
+  acessos        Json     @db.Json
+
   @@map("usuarios")
 }
+
 
 model centrais{
   id              String @id @default(auto()) @map("_id") @db.ObjectId
@@ -40,7 +42,7 @@ model equipamentos{
   device_id       String @unique
   ip              String
   mac             String
-  central_id      String @unique
+  central_id      String
   device_hostname String?
 
 
@@ -54,6 +56,6 @@ model Logs {
   process     String
   description String
   datetime    DateTime @default(now())
-  @@map("logs")
+  @@map("logs_v2")
 }
 
