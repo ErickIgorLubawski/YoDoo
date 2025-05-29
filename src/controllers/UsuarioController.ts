@@ -108,7 +108,7 @@ export class UsuarioController {
     try {
         const service = new UsuarioServices();
         const usuario = await service.list();
-
+        
         await logExecution({ ip: ipusuario, class: "UsuarioController",function: "list",process: "listar usuarios",description: "sucess",});;
         return reply.status(200).send({task: "SUCESS.", resp: usuario});
       } catch (error: any) {
