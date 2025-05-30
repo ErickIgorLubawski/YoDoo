@@ -9,9 +9,9 @@ export class CentralServices {
     return await prisma.centrais.create({ data });
   }
 
-  async findByIP(ip: string) {
+  async findByIP(id: string) {
     return await prisma.centrais.findFirst({
-      where: { ipCentralMRD: ip }
+      where: { device_id: id }
     });
   }
 
@@ -19,8 +19,8 @@ export class CentralServices {
     return await prisma.centrais.findMany();
   }
 
-  async getById(id: string) {
-    return await prisma.centrais.findUnique({ where: { id } });
+  async getById(device_id: string) {
+    return await prisma.centrais.findUnique({ where: { device_id } });
   }
 
   async getByDeviceIds(deviceIds: string[]) {
@@ -34,16 +34,15 @@ export class CentralServices {
   }
 
   async update(data: CentralDTO) {
-    const { id, ipCentralMRD, nomeEdificio, numero, rua, bairro } = data;
-    console.log(id)
+    const { device_id ,ipCentralMRD, nomeEdificio, numero, rua, bairro } = data;
     return await prisma.centrais.update({
-      where: { id },
+      where: { device_id },
       data: { ipCentralMRD, nomeEdificio, numero, rua, bairro }
     });
   }
 
-  async delete(id: string) {
-    console.log(id)
-    return await prisma.centrais.delete({ where: { id } });
+  async delete(device_id: string) {
+    console.log(device_id)
+    return await prisma.centrais.delete({ where: { device_id } });
   }
 }

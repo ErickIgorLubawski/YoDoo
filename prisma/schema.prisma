@@ -17,12 +17,10 @@ model usuarios {
   password       String
   bio            String?
   base64         String?
-  user_idCentral Int?     @unique
+  user_idCentral String?     @unique
+  acessos        Json     @db.Json  @default("[]")  // armazena arrays de objetos
 
-  // armazena um JSON livre — vai guardar o array de objetos de acessos
-  acessos        Json     @db.Json
-
-  @@map("usuarios_v2")
+  @@map("teste_usuarios")
 }
 
 
@@ -35,7 +33,7 @@ model centrais{
   rua             String?
   bairro          String?
 
-  @@map("centrais")
+  @@map("teste_centrais")
 }
 model equipamentos{
   id              String @id @default(auto()) @map("_id") @db.ObjectId
@@ -46,7 +44,7 @@ model equipamentos{
   device_hostname String?
 
 
-  @@map("equipamentos")
+  @@map("teste_equipamentos")
 }
 model Logs {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
@@ -56,6 +54,6 @@ model Logs {
   process     String
   description String
   datetime    DateTime @default(now())
-  @@map("logs_v2")
+  @@map("teste_logs")
 }
 

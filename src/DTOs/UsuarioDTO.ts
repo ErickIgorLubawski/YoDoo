@@ -14,6 +14,13 @@ export interface UsuarioIdCentralDTO extends UsuarioDTO{
   user_idCentral:   string
   idcentral:        string
 }
+export interface AcessoDoc {
+  central:     string;
+  equipamento: string;
+  userID:      string;
+  begin_time:  string;
+  end_time:    string;
+}
 
 // export interface UsuarioCentralDTO{
 //     idYD?:             string

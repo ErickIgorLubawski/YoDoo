@@ -52,6 +52,7 @@ export class UsuarioController {
     }
     
     try {
+      console.log(UsuarioDTO)
           const serviceCentral = new RequestCentral();
           const centralResult = await serviceCentral.processarUsuarioCentral(UsuarioDTO, ipusuario, "POST");
 
@@ -75,28 +76,28 @@ export class UsuarioController {
 
         //   const UsuarioIdCentral: UsuarioIdCentralDTO = {
         //   name: 'erick',
-        //   idYD: '2',
+        //   idYD: '1',
         //   password: '548837',
         //   begin_time: '12-06-2025 20:00:00',
-        //   end_time: '13-06-2025 20:01:00',
-        //   acessos: [ '5' ],
+        //   end_time: '-06-2025 20:01:00',
+        //   acessos: [ '1' ],
         //   bio: 'testede bio',
         //   base64: '/9j/4AA',
         //   user_idCentral: '178',
         //   idcentral: '3'
         // }
-          
-          const service = new UsuarioServices();
-          const exists = await service.findByIdYD(UsuarioDTO.idYD);
-          if(!exists) {
+            const service = new UsuarioServices();
+            const exists = await service.findByIdYD(UsuarioDTO.idYD);
+            if(!exists) {
+              const usuarios = await service.createUserAcess(UsuarioIdCentral);
+              await logExecution({ ip: ipusuario, class: "UsuarioController",function: "createbiometria", process: "criação de biometria",description: "sucess",});;
+             return reply.status(200).send({task: "SUCESS",resp: usuarios});
+            }
             const usuario = await service.createUserAcess(UsuarioIdCentral);
               await logExecution({ ip: ipusuario, class: "UsuarioController",function: "createbiometria", process: "criação de biometria",description: "sucess",});;
-            return reply.status(200).send({task: "SUCESS",resp: usuario});
-            }
-            const usuario = await service.createAccesses(UsuarioIdCentral);
-              await logExecution({ ip: ipusuario, class: "UsuarioController",function: "createbiometria", process: "criação de biometria",description: "sucess",});;
-            return reply.status(200).send({task: "SUCESS",resp: usuario});
-          
+             return reply.status(200).send({task: "SUCESS",resp: usuario});
+
+
           } catch (error: any) {
             await logExecution({ ip: ipusuario, class: "UsuarioController",function: "createbiometria",process: "criação de biometria",description: "error",});;
       return reply.status(500).send({ task: "ERROR",resp: 'falha ao cadastar' });
@@ -147,12 +148,12 @@ export class UsuarioController {
     }
       try {
         const service = new UsuarioServices();
-        // const usuarioacessos = await service.findByAcesso(acessos);
-        // if(!usuarioacessos) {
-        //   return reply.status(404).send({resp: "Cliente não encontrado(a)"});
-        // }
+        const usuarioacessos = 'ausente'
+        if(!usuarioacessos) {
+          return reply.status(404).send({resp: "Cliente não encontrado(a)"});
+        }
         await logExecution({ ip: ipusuario, class: "UsuarioController",function: "listusers",process: "listar usuario no equipamento",description: "sucess",});;
-        // return reply.status(200).send({ task: "SUCESS", resp: usuarioacessos});
+         return reply.status(200).send({ task: "SUCESS", resp: usuarioacessos});
       } catch (error: any) {
         await logExecution({ ip: ipusuario, class: "UsuarioController",function: "listusers",process: "listar usuario no equipamento",description: "error",});;
         return reply.status(404).send({ task: "ERROR",resp: 'cliente não encontrado'});
@@ -182,11 +183,10 @@ export class UsuarioController {
         return reply.status(500).send({ task: "ERROR",resp: 'equipamento não encontrada' });
       }
       const service = new UsuarioServices();
-      const usuario = await service.updateAcesso(UsuarioIdCentral);
-      console.log('usuario',usuario)
+      const usuarios = await service.updateUser(UsuarioIdCentral);
 
       await logExecution({ ip: ipusuario, class: "UsuarioController",function: "update",process: "atualizar usuario",description: "sucess",});;
-      return reply.status(200).send({ task: "SUCESS.", resp: usuario});
+      return reply.status(200).send({ task: "SUCESS.", resp: usuarios});
     } catch (error: any) {
       await logExecution({ ip: ipusuario, class: "UsuarioController",function: "update",process: "atualizar usuario",description: "error",});;
       return reply.status(500).send({ task: "ERROR",resp: 'cliente ou acesso não encontrado'});
@@ -233,3 +233,5 @@ export class UsuarioController {
     }
   }
 }
+
+//eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc3VhcmlvQWRtaW5Ub2tlbiI6IllvdWRvb19NUkQiLCJTZW5oYVRva2VuIjoiNTg3NDY5IiwiaWF0IjoxNzQ4NTk0MzE2LCJleHAiOjE3NDg2ODA3MTZ9.EYN1ldGPPTpKPQu33I2La5Ftu3dCLpsXWHllJ8pTPLE
