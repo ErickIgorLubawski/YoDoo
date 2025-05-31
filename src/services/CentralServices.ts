@@ -4,25 +4,20 @@ import { CentralDTO } from "../DTOs/CentralDTO";
 
 export class CentralServices {
 
-  
   async create(data: CentralDTO) {
     return await prisma.centrais.create({ data });
   }
-
   async findByIP(id: string) {
     return await prisma.centrais.findFirst({
       where: { device_id: id }
     });
   }
-
   async list() {
     return await prisma.centrais.findMany();
   }
-
   async getById(device_id: string) {
     return await prisma.centrais.findUnique({ where: { device_id } });
   }
-
   async getByDeviceIds(deviceIds: string[]) {
     return await prisma.centrais.findMany({
       where: {
@@ -32,7 +27,6 @@ export class CentralServices {
       }
     });
   }
-
   async update(data: CentralDTO) {
     const { device_id ,ipCentralMRD, nomeEdificio, numero, rua, bairro } = data;
     return await prisma.centrais.update({
@@ -40,7 +34,6 @@ export class CentralServices {
       data: { ipCentralMRD, nomeEdificio, numero, rua, bairro }
     });
   }
-
   async delete(device_id: string) {
     console.log(device_id)
     return await prisma.centrais.delete({ where: { device_id } });

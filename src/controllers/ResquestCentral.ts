@@ -13,7 +13,6 @@ export class RequestCentral {
       const result = await this.sendAll(payloads.payloads, iprequest);
       
       const idacessos = payloads.centralIds
-      console.log('id ca dentral',idacessos)
       return {result, idacessos}
   }
 
@@ -107,8 +106,6 @@ export class RequestCentral {
    
     const tasks: any[] = []; 
     let user_idDevice = 0;
-  
-    console.log(payloads)
 
     for (const request of payloads) {
       try {
@@ -117,7 +114,6 @@ export class RequestCentral {
           method: request.method,
           data: request.body, 
         });
-        console.log('response da requisicão: ', resp)
         const data = resp.data;
         if (data.task){
            tasks.push(data.task);

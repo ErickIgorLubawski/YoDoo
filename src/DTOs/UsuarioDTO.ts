@@ -15,13 +15,39 @@ export interface UsuarioIdCentralDTO extends UsuarioDTO{
   idcentral:        string
 }
 export interface AcessoDoc {
-  central:     string;
-  equipamento: string;
-  userID:      string;
-  begin_time:  string;
-  end_time:    string;
+  central:          string;
+  equipamento:      string;
+  user_idCentral?:  string;
+  begin_time:       string;
+  end_time:         string;
+}
+export interface UsuarioComAcesso {
+  name:      string;
+  idYD:      string;
+  password:  string;
+  bio:       string;
+  base64:    string;
+  acessos: Array<{
+    central:       string;
+    equipamento:   string;
+    user_idCentral: string;
+    begin_time:    string;
+    end_time:      string;
+  }>;
+}
+export interface CentralInfo {
+  device_id:    string;
+  ipCentralMRD: string;
+  nomeEdificio: string;
+  numero:       string;
+  rua?:         string;
+  bairro?:      string;
 }
 
+export interface UsuarioResumo {
+  name: string;
+  idYD: string;
+}
 // export interface UsuarioCentralDTO{
 //     idYD?:             string
 //     password?:         string
