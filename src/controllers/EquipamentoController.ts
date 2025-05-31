@@ -17,7 +17,6 @@ export class EquipamentoController {
     if (!device_id || !ip) {
       return reply .status(400).send({ resp: "Campos obrigatórios: device_id e ip" });
     }
-    console.log(request.body);
     try {
       
       const service = new EquipamentoServices();
@@ -118,7 +117,6 @@ export class EquipamentoController {
     try {
       const service = new EquipamentoServices();
       const equipamentoid = await service.findByIdYD(device_id); 
-      console.log(equipamentoid);
       if (!equipamentoid) {
         return reply.status(404).send({resp: "Equipamento não encontrada"});
       }

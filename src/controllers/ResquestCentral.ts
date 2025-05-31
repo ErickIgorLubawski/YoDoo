@@ -103,8 +103,6 @@ export class RequestCentral {
     return {payloads ,centralIds};
   }
   private async sendAll(payloads: Array<Payload<any>>, iprequest: string) {
-   
-    console.log(payloads)
 
     const tasks: any[] = []; 
     let user_idDevice = 0;
@@ -116,9 +114,7 @@ export class RequestCentral {
           method: request.method,
           data: request.body, 
         });
-        console.log('request: ',request)
         const data = resp.data;
-        console.log('resp: ',resp)
         if (data.task){
            tasks.push(data.task);
            tasks.toString()

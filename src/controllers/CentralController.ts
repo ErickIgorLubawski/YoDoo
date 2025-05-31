@@ -79,7 +79,6 @@ export class CentralController {
 
     const Central = request.body as CentralDTO;
 
-    console.log(request.body);
 
     if (!Central.device_id || !Central.ipCentralMRD || !Central.nomeEdificio || !Central.numero) {
       return reply.status(400).send({ error: "Campos obrigatórios: id, ipCentralMRD, nomeEdificio e numero" });
@@ -100,19 +99,16 @@ export class CentralController {
   async delete(request: FastifyRequest, reply: FastifyReply) {
     const iprequest = request.ip
     const Central = request.body as CentralDTO;
-    console.log(Central)
     if (!Central.device_id) {
       return reply.status(400).send({resp: "ID é obrigatório"});
     }
     try {
       const service = new CentralServices();
       const idcentral = await service.getById(Central.device_id);
-      console.log(idcentral)
       if (!idcentral) {
         return reply.status(404).send({resp: "Central não encontrada"});
       }
       const deleted = await service.delete(Central.device_id)
-      console.log('teste de delte: ', deleted)
       await logExecution({ ip: iprequest, class: "CentralController",function: "delete",process: "deleta central",description: "sucess",});;
       return reply.status(200).send({task: "SUCESS",  data: deleted
       });

@@ -35,7 +35,6 @@ export class CentralServices {
     });
   }
   async delete(device_id: string) {
-    console.log(device_id)
     return await prisma.centrais.delete({ where: { device_id } });
   }
 }

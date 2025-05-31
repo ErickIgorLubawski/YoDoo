@@ -204,8 +204,6 @@ async findCentralUsers(deviceId: string): Promise<CentralInfo & { users: Usuario
         bairro:       true
       },
     });
-    console.log(deviceId)
-    console.log(central)
 
     if (!central) {
       throw new Error(`Central com device_id="${deviceId}" não encontrada`);

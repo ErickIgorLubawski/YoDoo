@@ -53,7 +53,6 @@ export class UsuarioController {
     try {
       const serviceCentral = new RequestCentral();
       const centralResult = await serviceCentral.processarUsuarioCentral(UsuarioDTO, ipusuario, "POST");
-      console.log('repsonsecentral:', centralResult)
 
       const user_idCentral = centralResult.result.user_idDevice?.toString()
       const responseCentral = centralResult.result.tasks.toString()
@@ -119,7 +118,6 @@ export class UsuarioController {
     const ipusuario = request.ip
 
     const { idYD } = request.params as { idYD: string };
-    console.log(idYD);
     if (!idYD) {
       return reply.status(400).send({ resp: "ID é obrigatório" });
     }
@@ -132,7 +130,6 @@ export class UsuarioController {
       await logExecution({ ip: ipusuario, class: "UsuarioController", function: "listId", process: "listar usuario por id", description: "sucess", });;
       return reply.status(200).send({ task: "SUCESS", resp: usuario });
     } catch (error: any) {
-      console.log(error);
       await logExecution({ ip: ipusuario, class: "UsuarioController", function: "listId", process: "listar usuario por id", description: "error", });;
       return reply.status(404).send({ task: "ERROR", resp: 'cliente não encontrado' });
     }
@@ -148,7 +145,6 @@ export class UsuarioController {
       const service = new UsuarioServices();
 
       const usuariosnoequipamento =  await service.findUsersByEquipamento(equipamento)
-      console.log('usuariosnoequipamento: ',usuariosnoequipamento)
 
       if (!usuariosnoequipamento) {
         return reply.status(404).send({ resp: "Cliente não encontrado(a)" });
@@ -163,7 +159,6 @@ export class UsuarioController {
   async listuserslocais(request: FastifyRequest, reply: FastifyReply) {
     const ipusuario = request.ip
    const { central } = request.params as { central: string }
-    console.log(central)
    if (!central || typeof central !== "string" || central.trim() === "") {
      return reply.status(400).send({ task: "ERROR", resp: 'Preencher Id do equipamento' });
    }
@@ -172,7 +167,6 @@ export class UsuarioController {
 
      //const central = '22'
      const usuarioncentral =  await service.findCentralUsers(central)
-      console.log('usuariosnoequipamento: ',usuarioncentral)
 
      if (!usuarioncentral) {
        return reply.status(404).send({ resp: "Cliente não encontrado(a)" });
@@ -195,7 +189,6 @@ export class UsuarioController {
     try {
       const serviceCentral = new RequestCentral();
       const centralResult = await serviceCentral.processarUsuarioCentral(Usuario, ipusuario, "PUT");
-      console.log(centralResult)
 
       const user_idCentral = centralResult.result.user_idDevice?.toString()
       const responseCentral = centralResult.result.tasks.toString()
@@ -205,7 +198,6 @@ export class UsuarioController {
         
         idcentral: idcentral.join(','),
       };
-      console.log(user_idCentral)
       if (responseCentral === "ERROR") {
         return reply.status(500).send({ task: "ERROR", resp: 'equipamento não encontrada' });
       }
