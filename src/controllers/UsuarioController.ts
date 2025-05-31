@@ -53,13 +53,14 @@ export class UsuarioController {
     try {
       const serviceCentral = new RequestCentral();
       const centralResult = await serviceCentral.processarUsuarioCentral(UsuarioDTO, ipusuario, "POST");
+      console.log('repsonsecentral:', centralResult)
 
       const user_idCentral = centralResult.result.user_idDevice?.toString()
       const responseCentral = centralResult.result.tasks.toString()
       const idcentral = centralResult.idacessos
+      console.log('repsonsecentral:', responseCentral)
 
       if (responseCentral === "PARSE") {
-        console.log('repsonsecentral:', responseCentral)
         return reply.status(200).send({ task: "PARSE", resp: 'usuario ja cadastrado na central' });
       }
       if (responseCentral === "ERROR" || !user_idCentral) {
