@@ -119,8 +119,9 @@ export class RequestCentral {
            tasks.push(data.task);
            tasks.toString()
         }
+        console.log('request: ',request)
+        console.log('resp: ',resp)
         
-
         if (request.method === 'POST'||request.method === 'PUT') {
           user_idDevice = resp.data.resp.acessos[0].user_idDevice;
         }

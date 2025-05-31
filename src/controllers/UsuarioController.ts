@@ -58,7 +58,6 @@ export class UsuarioController {
       const user_idCentral = centralResult.result.user_idDevice?.toString()
       const responseCentral = centralResult.result.tasks.toString()
       const idcentral = centralResult.idacessos
-      console.log('repsonsecentral:', responseCentral)
 
       if (responseCentral === "PARSE") {
         return reply.status(200).send({ task: "PARSE", resp: 'usuario ja cadastrado na central' });
