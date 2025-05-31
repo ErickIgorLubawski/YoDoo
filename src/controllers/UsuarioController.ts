@@ -62,6 +62,7 @@ export class UsuarioController {
       if (responseCentral === "PARSE") {
         return reply.status(200).send({ task: "PARSE", resp: 'usuario ja cadastrado na central' });
       }
+      console.log(responseCentral)
       if (responseCentral === "ERROR" || !user_idCentral) {
         return reply.status(500).send({ task: "ERROR", resp: 'equipamento não encontrada' });
       }
@@ -202,7 +203,7 @@ export class UsuarioController {
       const idcentral = centralResult.idacessos
       const UsuarioIdCentral: UsuarioIdCentralDTO = {
         ...Usuario,
-        user_idCentral,
+        
         idcentral: idcentral.join(','),
       };
       console.log(user_idCentral)
