@@ -44,7 +44,7 @@ export class RequestCentral {
     for (const centralId in centralMap) {
 
       const equipamentoIps = centralMap[centralId]; // todos os IPs desse grupo
-      const baseUrl = `http://189.101.65.76:557`;  
+      const baseUrl = `http://mrdprototype.ddns.net:557`;  
       // 
       // Monta URL dinâmica
       // const centralIp = centralIpMap[centralId]; // IP real da central
