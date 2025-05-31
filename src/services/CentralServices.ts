@@ -12,6 +12,20 @@ export class CentralServices {
       where: { device_id: id }
     });
   }
+
+  async searchIdCentral(ipCentralMRD: any) {
+    const central = await prisma.centrais.findFirst({
+      where: {
+        ipCentralMRD: ipCentralMRD,
+      },
+      select: {
+        device_id: true,
+      },
+    });
+  
+    return central;
+  }
+  
   async list() {
     return await prisma.centrais.findMany();
   }
