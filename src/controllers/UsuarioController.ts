@@ -59,9 +59,9 @@ export class UsuarioController {
       const idcentral = centralResult.idacessos
 
       if (responseCentral === "PARSE") {
+        console.log('repsonsecentral:', responseCentral)
         return reply.status(200).send({ task: "PARSE", resp: 'usuario ja cadastrado na central' });
       }
-      console.log('repsonsecentral:', responseCentral)
       if (responseCentral === "ERROR" || !user_idCentral) {
         return reply.status(500).send({ task: "ERROR", resp: 'equipamento não encontrada' });
       }
