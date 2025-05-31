@@ -11,7 +11,7 @@ export interface UsuarioDTO {
 }
 
 export interface UsuarioIdCentralDTO extends UsuarioDTO{
-  user_idCentral:   string
+  user_idCentral?:   string
   idcentral:        string
 }
 export interface AcessoDoc {

@@ -107,7 +107,6 @@ async  atualizarAcessoEspecifico(data: UsuarioIdCentralDTO) {
         begin_time: data.begin_time,
         end_time: data.end_time,
         central: data.idcentral ?? acesso.central,
-        userID: data.user_idCentral,
       };
     }
     return acesso;
