@@ -116,13 +116,13 @@ export class RequestCentral {
           method: request.method,
           data: request.body, 
         });
+        console.log('request: ',request)
         const data = resp.data;
+        console.log('resp: ',resp)
         if (data.task){
            tasks.push(data.task);
            tasks.toString()
         }
-        console.log('request: ',request)
-        console.log('resp: ',resp)
         
         if (request.method === 'POST'||request.method === 'PUT') {
           user_idDevice = resp.data.resp.acessos[0].user_idDevice;
