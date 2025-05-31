@@ -51,7 +51,6 @@ export class UsuarioController {
       return reply.status(400).send({ task: "ERROR", resp: 'campos não preenchidos' });
     }
     try {
-      console.log(UsuarioDTO)
       const serviceCentral = new RequestCentral();
       const centralResult = await serviceCentral.processarUsuarioCentral(UsuarioDTO, ipusuario, "POST");
 
@@ -62,7 +61,7 @@ export class UsuarioController {
       if (responseCentral === "PARSE") {
         return reply.status(200).send({ task: "PARSE", resp: 'usuario ja cadastrado na central' });
       }
-      console.log(responseCentral)
+      console.log('repsonsecentral:', responseCentral)
       if (responseCentral === "ERROR" || !user_idCentral) {
         return reply.status(500).send({ task: "ERROR", resp: 'equipamento não encontrada' });
       }
