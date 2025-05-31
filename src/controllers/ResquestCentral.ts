@@ -104,6 +104,8 @@ export class RequestCentral {
   }
   private async sendAll(payloads: Array<Payload<any>>, iprequest: string) {
    
+    console.log(payloads)
+
     const tasks: any[] = []; 
     let user_idDevice = 0;
 
