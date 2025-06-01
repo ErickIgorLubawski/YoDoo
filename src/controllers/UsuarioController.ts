@@ -61,7 +61,7 @@ export class UsuarioController {
       if (responseCentral === "PARSE") {
         return reply.status(200).send({ task: "PARSE", resp: 'usuario ja cadastrado na central' });
       }
-      if (responseCentral === "ERROR" || !user_idCentral) {
+      if (responseCentral === "ERROR" || !user_idCentral && !centralResult.result.tasks ) {
         return reply.status(500).send({ task: "ERROR", resp: 'equipamento não encontrada' });
       }
       const UsuarioIdCentral: UsuarioIdCentralDTO = {
@@ -86,7 +86,7 @@ export class UsuarioController {
       const service = new UsuarioServices();
       const exists = await service.findByIdYD(UsuarioDTO.idYD);
       
-      if (!exists) {
+      if (!exists ) {
         const usuario = await service.createUserAcess(UsuarioIdCentral);
         await logExecution({ ip: ipusuario, class: "UsuarioController", function: "createbiometria", process: "criação de biometria", description: "sucess", });;
         return reply.status(200).send({ task: "SUCESS", resp: usuario });
