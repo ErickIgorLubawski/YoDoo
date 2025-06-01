@@ -16,7 +16,33 @@ async getById(idYD: string) {
   return await prisma.usuarios.findFirst({ where: { idYD } });
 }
 async delete(idYD: string) {
-    return await prisma.usuarios.delete({ where: { idYD } });
+  // 1. Busca o usuário atual
+  const usuario = await prisma.usuarios.findUnique({
+    where: { idYD },
+  });
+
+  if (!usuario) {
+    throw new Error('Usuário não encontrado');
+  }
+
+  // 2. Insere na tabela de deletados
+  await prisma.usuarios_deletados.create({
+    data: {
+      id: usuario.id,
+      idYD: usuario.idYD,
+      name: usuario.name,
+      password: usuario.password,
+      bio: usuario.bio,
+      base64: usuario.base64,
+      user_idCentral: usuario.user_idCentral,
+      acessos: usuario.acessos ?? {}, // <- Aqui tratamos caso esteja null
+    },
+  });
+
+  // 3. Remove da tabela original
+  return await prisma.usuarios.delete({
+    where: { idYD },
+  });
 }
 async createUserAcess(data: UsuarioIdCentralDTO) {
   // Monta o array de objetos de acesso

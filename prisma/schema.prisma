@@ -22,6 +22,18 @@ model usuarios {
 
   @@map("teste_usuarios")
 }
+model usuarios_deletados {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  name           String
+  idYD           String   @unique
+  password       String
+  bio            String?
+  base64         String?
+  user_idCentral String?     @unique
+  acessos        Json     @db.Json  @default("[]")  // armazena arrays de objetos
+
+  @@map("usuarios_deletados")
+}
 
 
 model centrais{
