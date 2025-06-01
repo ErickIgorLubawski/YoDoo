@@ -61,7 +61,7 @@ export class EquipamentoController {
         });
       }
       await logExecution({ ip: iprequest, class: "EquipamentoController", function: "list", process: "list equipamento", description: "sucess", });;
-      return reply.status(200).send({ task: "SUCESS.", resp: equipamentoscentral });
+      return reply.status(200).send({ task: "SUCESS.", resp:listaEquipamentoscentral });
     } catch (err: any) {
       await logExecution({ ip: iprequest, class: "EquipamentoController", function: "create", process: "cria equipamento", description: "error", });;
       return reply.status(500).send({ resp: "ERROR" });
