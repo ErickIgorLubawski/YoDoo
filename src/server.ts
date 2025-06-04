@@ -22,8 +22,18 @@ const start = async () => {
         await app.register(usuarioRoutes);
         await app.register(centralRoutes);
         await app.register(equipamentoRoutes);
-        await app.listen({ port: 3001, host: '0.0.0.0' });
-        console.log('✅ Servidor iniciado na porta 3001');
+        const porta = process.env.PORTA_SERVER;
+        if (!porta) {
+            console.log('Variável de ambiente PORTA_CENTRAL não definida.')
+           throw new Error('Variável de ambiente PORTA_CENTRAL não definida.');
+        }
+        await app.listen({ port: +porta, host: '0.0.0.0' });
+
+
+        console.log(`✅ Servidor iniciado na porta ${process.env.PORTA_SERVER}`);
+        console.log(`✅ Porta central ${process.env.PORTA_CENTRAL}`)
+
+        
         await logExecution({ ip: '1.1.1.2', class: 'Server',function: 'start',process: 'Inicialização do servidor',description: 'Servidor e banco iniciados com sucesso',});
     } catch (resp) {
         app.log.error(resp, 'Erro ao iniciar API no servidor');

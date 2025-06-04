@@ -13,8 +13,10 @@ export class UsuarioController {
 
   usuarioLocal: UsuarioToken = { UsuarioAdminToken: 'Youdoo_MRD', SenhaToken: '587469', };
 
+
   async login(request: FastifyRequest, reply: FastifyReply) {
     const ipusuario = request.ip
+    console.log('Dados do front end: ',request.body)
 
     const { usuario, senha } = request.body as { usuario: string; senha: string };
     if (!usuario || !senha) {
@@ -34,7 +36,7 @@ export class UsuarioController {
       });
 
       await logExecution({ ip: ipusuario, class: "UsuarioController", function: "list", process: "Solicitação de Token", description: "sucess", });;
-      return reply.status(200).send({ token })
+      return reply.status(200).send({ usuario, senha  })
 
     } catch (error: any) {
       await logExecution({ ip: ipusuario, class: "UsuarioController", function: "list", process: "Solicitação de Token", description: "error", });;
