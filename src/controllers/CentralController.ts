@@ -25,9 +25,7 @@ export class CentralController {
 
         const central = await service.create(Central);
         await logExecution({ ip: iprequest, class: "CentralController",function: "create",process: "Criação da central",description: "sucess",});;
-        return reply.status(200).send({task: "SUCESS.",
-          
-          resp: central});
+        return reply.status(200).send({task: "SUCESS.", resp: central});
 
       } catch (error: any) {
         await logExecution({ ip: iprequest, class: "CentralController",function: "create",process: "Criação da central",description: "error",});;

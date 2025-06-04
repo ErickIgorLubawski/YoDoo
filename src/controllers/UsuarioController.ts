@@ -36,7 +36,7 @@ export class UsuarioController {
       });
 
       await logExecution({ ip: ipusuario, class: "UsuarioController", function: "list", process: "Solicitação de Token", description: "sucess", });;
-      return reply.status(200).send({ usuario, senha  })
+      return reply.status(200).send({ token })
 
     } catch (error: any) {
       await logExecution({ ip: ipusuario, class: "UsuarioController", function: "list", process: "Solicitação de Token", description: "error", });;
@@ -55,15 +55,18 @@ export class UsuarioController {
     try {
       const serviceCentral = new RequestCentral();
       const centralResult = await serviceCentral.processarUsuarioCentral(UsuarioDTO, ipusuario, "POST");
+      console.log('resposta da central: ',centralResult)
 
       const user_idCentral = centralResult.result.user_idDevice?.toString()
       const responseCentral = centralResult.result.tasks.toString()
       const idcentral = centralResult.idacessos
-
+      console.log('status resposta da central: ',responseCentral)
+      console.log('ID do usuario na central: ',user_idCentral)
+      console.log('id da central: ',idcentral)
       if (responseCentral === "PARSE") {
         return reply.status(200).send({ task: "PARSE", resp: 'usuario ja cadastrado na central' });
       }
-      if (responseCentral === "ERROR" || !user_idCentral && !centralResult.result.tasks ) {
+      if (responseCentral === "ERROR" || centralResult.result.success ===false) {
         return reply.status(500).send({ task: "ERROR", resp: 'equipamento não encontrada' });
       }
       const UsuarioIdCentral: UsuarioIdCentralDTO = {
