@@ -3,7 +3,7 @@ import { FastifyRequest, FastifyReply } from "fastify";
 import jwt from 'jsonwebtoken';
 import { UsuarioServices } from "../services/UsuarioServices";
 import { logExecution } from "../utils/logger";
-import { RequestCentral } from "./ResquestCentral";
+import { RequestCentral } from "./ResquestUsuarios";
 
 interface UsuarioToken {
   UsuarioAdminToken: string;
@@ -55,18 +55,22 @@ export class UsuarioController {
     try {
       const serviceCentral = new RequestCentral();
       const centralResult = await serviceCentral.processarUsuarioCentral(UsuarioDTO, ipusuario, "POST");
-      console.log('resposta da central: ',centralResult)
+      const task = centralResult.result.tasks.toString()
+      // console.log('resposta da central: ',centralResult)
+      // console.log('task da central em request central',task)
+
 
       const user_idCentral = centralResult.result.user_idDevice?.toString()
-      const responseCentral = centralResult.result.tasks.toString()
       const idcentral = centralResult.idacessos
-      console.log('status resposta da central: ',responseCentral)
-      console.log('ID do usuario na central: ',user_idCentral)
-      console.log('id da central: ',idcentral)
-      if (responseCentral === "PARSE") {
-        return reply.status(200).send({ task: "PARSE", resp: 'usuario ja cadastrado na central' });
+     
+      // console.log('status resposta da central: ',responseCentral)
+      // console.log('ID do usuario na central: ',user_idCentral)
+      // console.log('id da central: ',idcentral)
+      
+      if (task.includes("PARSE")) {
+        return reply.status(200).send({ task: "PARSE", resp: 'usuario ja cadastrado no equipamento' });
       }
-      if (responseCentral === "ERROR" || centralResult.result.success ===false) {
+      if (task.includes("ERROR")) {
         return reply.status(500).send({ task: "ERROR", resp: 'equipamento não encontrada' });
       }
       const UsuarioIdCentral: UsuarioIdCentralDTO = {
@@ -75,18 +79,18 @@ export class UsuarioController {
         idcentral: idcentral.join(','),
       };
 
-      //Teste pra mais de uma central
+    // Teste pra mais de uma central equipamento
       // const UsuarioIdCentral: UsuarioIdCentralDTO = {
-      //   name: 'erick',
-      //   idYD: '2',
+      //   name: 'Erick DEV',
+      //   idYD: '10',
       //   password: '548837',
       //   begin_time: '01-06-2025 20:00:00',
       //   end_time: '01-2025 20:01:00',
-      //   acessos: ['5'],
+      //   acessos: ['4408801109345045'],
       //   bio: 'testede bio',
       //   base64: '/9j/4AA',
       //   user_idCentral: '178',
-      //   idcentral: '3'
+      //   idcentral: '1'
       // }
       const service = new UsuarioServices();
       const exists = await service.findByIdYD(UsuarioDTO.idYD);
@@ -107,13 +111,21 @@ export class UsuarioController {
   }
   async list(request: FastifyRequest, reply: FastifyReply) {
     const ipusuario = request.ip
+    const service = new UsuarioServices();
 
     try {
-      const service = new UsuarioServices();
-      const usuario = await service.list();
+      const { idyd } = request.query as { idyd: string };
+      
+      if(!idyd){
+        const usuario = await service.list();
+          await logExecution({ ip: ipusuario, class: "UsuarioController", function: "list", process: "listar usuarios", description: "sucess", });;
+        return reply.status(200).send({ task: "SUCESS.", resp: usuario });
+      }
+      const usuarioid = await service.getById(idyd);
+      await logExecution({ ip: ipusuario, class: "UsuarioController", function: "getById", process: "listar usuarios por id", description: "sucess", });;
+      return reply.status(200).send({ task: "SUCESS.", resp: usuarioid });
 
-      await logExecution({ ip: ipusuario, class: "UsuarioController", function: "list", process: "listar usuarios", description: "sucess", });;
-      return reply.status(200).send({ task: "SUCESS.", resp: usuario });
+
     } catch (error: any) {
       await logExecution({ ip: ipusuario, class: "UsuarioController", function: "list", process: "listar usuarios", description: "error", });;
       return reply.status(500).send({ task: "ERROR", resp: 'erro ao listar' });
@@ -171,8 +183,8 @@ export class UsuarioController {
      const service = new UsuarioServices();
 
      //const central = '22'
-     const usuarioncentral =  await service.findCentralUsers(central)
-
+     //const usuarioncentral =  await service.findCentralUsers(central)
+    const usuarioncentral = ''
      if (!usuarioncentral) {
        return reply.status(404).send({ resp: "Cliente não encontrado(a)" });
      }
@@ -195,20 +207,24 @@ export class UsuarioController {
       const serviceCentral = new RequestCentral();
       const centralResult = await serviceCentral.processarUsuarioCentral(Usuario, ipusuario, "PUT");
 
+      //console.log('usuario no equipamento',centralResult)
+
       const user_idCentral = centralResult.result.user_idDevice?.toString()
-      const responseCentral = centralResult.result.tasks.toString()
+      const task = centralResult.result.tasks.toString()
       const idcentral = centralResult.idacessos
       const UsuarioIdCentral: UsuarioIdCentralDTO = {
         ...Usuario,
-        
         idcentral: idcentral.join(','),
       };
-      if (responseCentral === "ERROR") {
+
+      console.log('payload',UsuarioIdCentral)
+
+      if (task.includes("ERROR")) {
         return reply.status(500).send({ task: "ERROR", resp: 'equipamento não encontrada' });
       }
       const service = new UsuarioServices();
       const usuarios = await service.atualizarAcessoEspecifico(UsuarioIdCentral);
-
+      console.log('usuarios no equipamento',usuarios)
       await logExecution({ ip: ipusuario, class: "UsuarioController", function: "update", process: "atualizar usuario", description: "sucess", });;
       return reply.status(200).send({ task: "SUCESS.", resp: usuarios });
     } catch (error: any) {

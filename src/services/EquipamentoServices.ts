@@ -1,6 +1,6 @@
 // src/services/EquipmentServices.ts
 import { prisma } from '../config/db';
-import { EquipamentoDTO } from "../DTOs/EquipamentoDTO";
+import { EquipamentoDTO,EquipamentoUpdateDTO } from "../DTOs/EquipamentoDTO";
 
 export class EquipamentoServices {
 
@@ -18,12 +18,18 @@ export class EquipamentoServices {
   async getById(id: string) {
     return await prisma.equipamentos.findUnique({ where: { id } });
   }
-  async update(data: EquipamentoDTO) {
-    const { device_id, ip, device_hostname } = data;
-    
+
+  async update(data: EquipamentoUpdateDTO) {
+    const { device_id, ...rest } = data;
+
+    // filtra apenas chaves que não sejam undefined
+    const updateData = Object.fromEntries(
+      Object.entries(rest).filter(([_, v]) => v !== undefined)
+    );
+
     return await prisma.equipamentos.update({
       where: { device_id },
-      data: { device_id, ip, device_hostname  }
+      data: updateData,
     });
   }
   async delete(device_id: string) {

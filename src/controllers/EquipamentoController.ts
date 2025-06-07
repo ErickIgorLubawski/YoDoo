@@ -1,7 +1,7 @@
 // src/controllers/EquipmentController.ts
 import { FastifyRequest, FastifyReply } from "fastify";
 import { EquipamentoServices } from "../services/EquipamentoServices";
-import { EquipamentoDTO } from "../DTOs/EquipamentoDTO";
+import { EquipamentoDTO, EquipamentoUpdateDTO } from "../DTOs/EquipamentoDTO";
 import { logExecution } from "../utils/logger";
 import { RequestEquipamento } from "../controllers/RequestEquipamento"
 import { CentralServices } from "../services/CentralServices";
@@ -12,42 +12,45 @@ export class EquipamentoController {
   async create(request: FastifyRequest, reply: FastifyReply) {
 
     const iprequest = request.ip
-    const ipcentralmrd = request.headers['ipcentralmrd'];
-    console.log(ipcentralmrd)
+    const { ipcentralmrd } = request.query as { ipcentralmrd: string };
+
+    console.log('params', ipcentralmrd)
+
+
     if (!ipcentralmrd) {
       return reply.status(400).send({ task: "ERROR.", resp: 'Preencher IPcentral' });
     }
     try {
-      
+
       //Equipamemtos da central
       const requestequipamento = new RequestEquipamento()
-      const equipamentoscentral = await requestequipamento.searchEquipamentoCentral(ipcentralmrd)
+      const equipamentoscentral = await requestequipamento.searchInfoEquipamento(ipcentralmrd)
       const listaEquipamentoscentral = equipamentoscentral?.resp?.ListadeEqs ?? [];
       console.log('equipamentos central: ', listaEquipamentoscentral)
 
       //idcentral
       const servicecentral = new CentralServices();
       const id = await servicecentral.searchIdCentral(ipcentralmrd);
-      const central_id = id?.device_id.toString() // convertendo aqui
+      const central_id = id?.device_id.toString()
 
       //Equipamentos do banco
       const serviceequipamento = new EquipamentoServices();
       const equipamentosdb = await serviceequipamento.list();
-      console.log('equipamentos banco: ', equipamentosdb)
+      //console.log('equipamentos banco: ', equipamentosdb)
 
       const idsBanco = new Set(equipamentosdb.map(e => e.device_id));
       // Filtrar apenas os equipamentos da central que NÃO estão no banco
-    // Filtrar apenas os equipamentos da central que NÃO estão no banco
-    const novosEquipamentos = listaEquipamentoscentral.filter((eq: { device_id: string }) =>
-      !idsBanco.has(eq.device_id)
-    );
+      // Filtrar apenas os equipamentos da central que NÃO estão no banco
+      const novosEquipamentos = listaEquipamentoscentral.filter((eq: { device_id: string }) =>
+        !idsBanco.has(eq.device_id)
+      );
 
 
-    if (novosEquipamentos.length === 0) {
-      // Nenhum novo equipamento, retorna os da central
-      await logExecution({ip: iprequest,class: "EquipamentoController",function: "create",process: "nenhum novo equipamento",description: "nenhum novo para cadastrar", });
-      return reply.status(200).send({ task: "SUCESS.",resp: listaEquipamentoscentral,message: "Nenhum novo equipamento cadastrado. Apenas retorno da central.",});
-    }
+      if (novosEquipamentos.length === 0) {
+        // Nenhum novo equipamento, retorna os da central
+        await logExecution({ ip: iprequest, class: "EquipamentoController", function: "create", process: "nenhum novo equipamento", description: "nenhum novo para cadastrar", });
+        return reply.status(200).send({ task: "SUCESS.", resp: listaEquipamentoscentral, message: "Nenhum novo equipamento cadastrado. Apenas retorno da central.", });
+      }
 
       console.log('novos para cadastrar:', novosEquipamentos);
       // Mapear os dados corretamente e salvar um a um
@@ -61,7 +64,7 @@ export class EquipamentoController {
         });
       }
       await logExecution({ ip: iprequest, class: "EquipamentoController", function: "list", process: "list equipamento", description: "sucess", });;
-      return reply.status(200).send({ task: "SUCESS.", resp:listaEquipamentoscentral });
+      return reply.status(200).send({ task: "SUCESS.", resp: listaEquipamentoscentral });
     } catch (err: any) {
       await logExecution({ ip: iprequest, class: "EquipamentoController", function: "create", process: "cria equipamento", description: "error", });;
       return reply.status(500).send({ resp: "ERROR" });
@@ -97,14 +100,18 @@ export class EquipamentoController {
       return reply.status(404).send({ resp: err.message });
     }
   }
-  async getByDeviceId(request: FastifyRequest, reply: FastifyReply) {
+  async listEquipamentos(request: FastifyRequest, reply: FastifyReply) {
+    
     const iprequest = request.ip
-    const { device_id } = request.params as EquipamentoDTO;
-
+    const { device_id } = request.query as { device_id: string };
+    
+    const service = new EquipamentoServices();
     if (!device_id) {
-      return reply.status(400).send({ error: "device_id é obrigatório" });
+      const listequipamentos = await service.list();
+      return reply.status(200).send({ task: "SUCESS.", resp: listequipamentos });
     }
     try {
+
       const service = new EquipamentoServices();
       const equipmento = await service.findByIdYD(device_id);
 
@@ -120,20 +127,52 @@ export class EquipamentoController {
   }
   async update(request: FastifyRequest, reply: FastifyReply) {
     const iprequest = request.ip
-    const { device_id, ip, mac, central_id } = request.body as EquipamentoDTO;
+    const equipamento = request.body as EquipamentoUpdateDTO;
 
-    if (!device_id || !ip) {
-      return reply.status(400).send({ resp: "Campos obrigatórios: id, device_id e ip" });
+    if (!equipamento.device_id ) {
+      return reply.status(400).send({ resp: "Campos obrigatórios: device_id" });
     }
     try {
+      //Pesquisa equipamento pelo ID e pega o ID da central e ip do equipamento
       const service = new EquipamentoServices();
-      const updated = await service.update({ device_id, ip, mac, central_id });
+      //objeto equipamento
+      const equipamentodb = await service.findByIdYD(equipamento.device_id );
+      // ip do equipamento
+      const equipamentoip = equipamentodb?.ip;
+      if (!equipamentoip) {
+        return reply.status(404).send({ resp: "Equipamento não encontrado." });
+      }
+      //pega o id da central
+      const idcentral = equipamentodb?.central_id
+      if (!idcentral) {
+        return reply.status(404).send({ resp: "Central não encontrada para este equipamento." });
+      }
+      const servicecentral = new CentralServices();
+      //pega os dados da central pra pegar o ip da central
+      const central        = await servicecentral.getById(idcentral);
+      const ipcentralmrd   = central?.ip_VPN;
+      if (!ipcentralmrd) {
+        return reply.status(404).send({ resp: "Central não encontrada no db." });
+      }
+      //montar body pra enviar pra central e atualizar o equipamento
+      const equipamentoUpdateDTO: EquipamentoUpdateDTO = {
+        ip: equipamento.ip || equipamentoip, // se o ip não for passado, usa o do db
+        mac: equipamento.mac,
+        device_hostname: equipamento.device_hostname ?? equipamentodb.device_hostname ?? undefined,
+      }
+      //ipcentral com body do equipamento faz request pra central
+      const requestequipamento = new RequestEquipamento()
+      const equipamentoscentral = await requestequipamento.updateEquipamento(equipamentoUpdateDTO, ipcentralmrd)
+
+      console.log('retorno do banco pelo id pra verificar o objeto: ',equipamentoscentral)
+
+      const equipamentoupdatdb = await service.update(equipamento);
 
       await logExecution({ ip: iprequest, class: "EquipamentoController", function: "update", process: "atualiza equipamento", description: "sucess", });;
-      return reply.status(200).send({ task: "SUCESS.", resp: updated });
+       return reply.status(200).send({ task: "SUCESS.", resp: equipamentoupdatdb});
     } catch (err: any) {
       await logExecution({ ip: iprequest, class: "EquipamentoController", function: "update", process: "atualiza equipamento", description: "error", });;
-      return reply.status(404).send({ resp: "Equipamento não encontrado." });
+      return reply.status(404).send({ task: "ERROR.",resp: "Equipamento não encontrado." });
     }
   }
   async delete(request: FastifyRequest, reply: FastifyReply) {
@@ -160,3 +199,9 @@ export class EquipamentoController {
     }
   }
 }
+// "id": "683a19935b7a30303e013a47",
+// "device_id": "1",
+// "ip": "192.168.0.129",
+// "mac": "FC:52:CE:8D:52:B4",
+// "central_id": "11",
+// "device_hostname": "Teste 1"

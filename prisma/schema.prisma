@@ -18,7 +18,10 @@ model usuarios {
   bio            String?
   base64         String?
   user_idCentral String?     @unique
-  acessos        Json     @db.Json  @default("[]")  // armazena arrays de objetos
+  acessos        Json        @db.Json  @default("[]")  // armazena arrays de objetos
+  createdAt     DateTime     @default(now())
+  // Prisma vai atualizar `updatedAt` sempre que você usar `prisma.centrais.update(...)`
+  updatedAt     DateTime     @updatedAt
 
   @@map("teste_usuarios")
 }
@@ -39,11 +42,19 @@ model usuarios_deletados {
 model centrais{
   id              String @id @default(auto()) @map("_id") @db.ObjectId
   device_id       String @unique   
-  ipCentralMRD    String
-  nomeEdificio    String
-  numero          String
-  rua             String?
-  bairro          String?
+  // Campos vindos do front + da central externa
+  ip_local      String
+  ip_VPN        String?
+  mac           String
+  nomeEdificio  String
+  numero        String
+  rua           String
+  bairro        String
+  version       String
+  // Prisma vai preencher `createdAt` na inserção
+  createdAt     DateTime @default(now())
+  // Prisma vai atualizar `updatedAt` sempre que você usar `prisma.centrais.update(...)`
+  updatedAt     DateTime @updatedAt
 
   @@map("teste_centrais")
 }
@@ -54,6 +65,9 @@ model equipamentos{
   mac             String
   central_id      String
   device_hostname String?
+  createdAt     DateTime @default(now())
+  // Prisma vai atualizar `updatedAt` sempre que você usar `prisma.centrais.update(...)`
+  updatedAt     DateTime @updatedAt
 
 
   @@map("teste_equipamentos")

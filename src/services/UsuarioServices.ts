@@ -10,11 +10,34 @@ async findByIdYD(idYD: string) {
   return await prisma.usuarios.findFirst({where: { idYD: idYD }});
 }
 async list() {
-  return await prisma.usuarios.findMany();
+  return await prisma.usuarios.findMany({
+    select: {
+      idYD: true,
+      name: true,
+      password: true,
+      bio: true,
+      acessos: true,
+      createdAt: true,
+      updatedAt: true,
+      // retira base64,user_idCentral e id banco omitindo-os do select
+    }
+  });
 }
 async getById(idYD: string) {
-  return await prisma.usuarios.findFirst({ where: { idYD } });
-}
+    return prisma.usuarios.findUnique({
+      where: { idYD },
+      select: {
+        id: true,
+        name: true,
+        idYD: true,
+        password: true,
+        bio: true,
+        acessos: true,
+        createdAt: true,
+        updatedAt: true
+      }
+    });
+  }
 async delete(idYD: string) {
   // 1. Busca o usuário atual
   const usuario = await prisma.usuarios.findUnique({
@@ -102,12 +125,12 @@ async  adicionarAcesso(data: UsuarioIdCentralDTO) {
 
   return usuarioAtualizado;
 }
-async  atualizarAcessoEspecifico(data: UsuarioIdCentralDTO) {
+async  atualizarAcessoEspecificoold(data: UsuarioIdCentralDTO) {
   // 1. Buscar o usuário pelo idYD
   const usuario = await prisma.usuarios.findUnique({
     where: { idYD: data.idYD },
   });
-
+  console.log('usuario', usuario);
   if (!usuario) {
     throw new Error('Usuário não encontrado');
   }
@@ -124,6 +147,7 @@ async  atualizarAcessoEspecifico(data: UsuarioIdCentralDTO) {
   }
 
   const equipamentoAlvo = data.acessos[0];
+  console.log('equipamentoAlvo', equipamentoAlvo);
 
   // 3. Atualiza apenas o objeto de acesso com o equipamento correspondente
   const acessosAtualizados = (usuario.acessos as unknown as AcessoDoc[]).map(acesso => {
@@ -135,12 +159,62 @@ async  atualizarAcessoEspecifico(data: UsuarioIdCentralDTO) {
         central: data.idcentral ?? acesso.central,
       };
     }
+  console.log('acessosAtualizados', acessosAtualizados);
+
     return acesso;
   });
 
   atualizacoes.acessos = acessosAtualizados;
+  console.log('acessosAtualizados', acessosAtualizados);
 
   // 4. Atualizar no banco
+  const usuarioAtualizado = await prisma.usuarios.update({
+    where: { idYD: data.idYD },
+    data: atualizacoes,
+  });
+  console.log('usuarioAtualizado', usuarioAtualizado);
+
+  return usuarioAtualizado;
+}
+async atualizarAcessoEspecifico(data: UsuarioIdCentralDTO) {
+  // 1) Busca o usuário pelo idYD
+  const usuario = await prisma.usuarios.findUnique({
+    where: { idYD: data.idYD },
+  });
+  if (!usuario) {
+    throw new Error("Usuário não encontrado");
+  }
+
+  // 2) Monta o objeto de update, adicionando só o que vier
+  const atualizacoes: any = {};
+  if (data.name && data.name !== usuario.name) {
+    atualizacoes.name = data.name;
+  }
+  if (data.password && data.password !== usuario.password) {
+    atualizacoes.password = data.password;
+  }
+
+  // 3) Atualiza só o acesso desejado
+  const equipamentoAlvo = data.acessos[0]; // o equipamento que veio no body
+  // transforma o JSON em array tipado
+  const acessosOriginais = usuario.acessos as unknown as AcessoDoc[];
+  const acessosAtualizados = acessosOriginais.map(acesso => {
+    if (acesso.equipamento === equipamentoAlvo) {
+      return {
+        ...acesso,
+        // só sobrescreve estes campos
+        begin_time: data.begin_time ?? acesso.begin_time,
+        end_time:   data.end_time   ?? acesso.end_time,
+        central:    data.idcentral  ?? acesso.central,
+      };
+    }
+    return acesso;
+  });
+
+  // 4) adiciona essa alteração ao objeto de update
+  atualizacoes.acessos = acessosAtualizados;
+
+  // 5) Grava tudo de volta
   const usuarioAtualizado = await prisma.usuarios.update({
     where: { idYD: data.idYD },
     data: atualizacoes,
@@ -217,60 +291,60 @@ async findUsersByEquipamento(equipamentoId: string): Promise<UsuarioComAcesso[]>
     // Forçando o cast para nosso tipo
     return usuarios as unknown as UsuarioComAcesso[];
 }
-async findCentralUsers(deviceId: string): Promise<CentralInfo & { users: UsuarioResumo[] }> {
-    // 1) Encontra a central exata
-    const central = await prisma.centrais.findUnique({
-      where: { device_id: deviceId },
-      select: {
-        device_id:    true,
-        ipCentralMRD: true,
-        nomeEdificio: true,
-        numero:       true,
-        rua:          true,
-        bairro:       true
-      },
-    });
+// async findCentralUsers(deviceId: string): Promise<CentralInfo & { users: UsuarioResumo[] }> {
+//     // 1) Encontra a central exata
+//     const central = await prisma.centrais.findUnique({
+//       where: { device_id: deviceId },
+//       select: {
+//         device_id:    true,
+//         //ipCentralMRD: true,
+//         nomeEdificio: true,
+//         numero:       true,
+//         rua:          true,
+//         bairro:       true
+//       },
+//     });
 
-    if (!central) {
-      throw new Error(`Central com device_id="${deviceId}" não encontrada`);
-    }
+//     if (!central) {
+//       throw new Error(`Central com device_id="${deviceId}" não encontrada`);
+//     }
 
-    // 2) Agregação no Mongo para buscar apenas name/idYD dos usuários que tenham acessos.central == deviceId
-    //    Usamos prisma.$runCommandRaw porque precisamos filtrar dentro do array JSON "acessos"
-    const raw = await prisma.$runCommandRaw({
-      aggregate: "teste_usuarios", // nome exato da coleção de usuários
-      pipeline: [
-        // 2a) MATCH: filtra só usuários cujo array acessos conteha um item com "central" == deviceId
-        { $match: { "acessos.central": deviceId } },
+//     // 2) Agregação no Mongo para buscar apenas name/idYD dos usuários que tenham acessos.central == deviceId
+//     //    Usamos prisma.$runCommandRaw porque precisamos filtrar dentro do array JSON "acessos"
+//     const raw = await prisma.$runCommandRaw({
+//       aggregate: "teste_usuarios", // nome exato da coleção de usuários
+//       pipeline: [
+//         // 2a) MATCH: filtra só usuários cujo array acessos conteha um item com "central" == deviceId
+//         { $match: { "acessos.central": deviceId } },
 
-        // 2b) PROJECT: mantemos só _id=0 (omitir), name e idYD dos usuários
-        //     e filtramos o próprio array 'acessos' (não é obrigatório, pois aqui só precisamos dos dados do usuário,
-        //     mas deixo como exemplo caso queira limitar a apenas 1 item do array)
-        {
-          $project: {
-            _id: 0,
-            name: 1,
-            idYD: 1
-            // Se você quisesse retornar também, por exemplo, o sub‐array de "acessos" que bate com a central,
-            // poderia incluir um bloco "acessos: { $filter: … }", mas como no seu novo requisito
-            // você só precisa dos usuários, deixamos de fora qualquer project sobre o array "acessos".
-          }
-        }
-      ],
-      cursor: {} // obrigatório para agregação bruta via runCommandRaw
-    });
+//         // 2b) PROJECT: mantemos só _id=0 (omitir), name e idYD dos usuários
+//         //     e filtramos o próprio array 'acessos' (não é obrigatório, pois aqui só precisamos dos dados do usuário,
+//         //     mas deixo como exemplo caso queira limitar a apenas 1 item do array)
+//         {
+//           $project: {
+//             _id: 0,
+//             name: 1,
+//             idYD: 1
+//             // Se você quisesse retornar também, por exemplo, o sub‐array de "acessos" que bate com a central,
+//             // poderia incluir um bloco "acessos: { $filter: … }", mas como no seu novo requisito
+//             // você só precisa dos usuários, deixamos de fora qualquer project sobre o array "acessos".
+//           }
+//         }
+//       ],
+//       cursor: {} // obrigatório para agregação bruta via runCommandRaw
+//     });
 
-    // O resultado virá como:
-    // { cursor: { firstBatch: [ { name, idYD }, { name, idYD }, … ], id: 0 }, ok: 1 }
-    // O Prisma “unwrap” internamente, de modo que `raw` já tende a ser = [ { name, idYD }, … ].
-    const usuarios = (raw as any).cursor.firstBatch as UsuarioResumo[];
+//     // O resultado virá como:
+//     // { cursor: { firstBatch: [ { name, idYD }, { name, idYD }, … ], id: 0 }, ok: 1 }
+//     // O Prisma “unwrap” internamente, de modo que `raw` já tende a ser = [ { name, idYD }, … ].
+//     const usuarios = (raw as any).cursor.firstBatch as UsuarioResumo[];
 
-    // 3) Retorna tudo empacotado em um único objeto
-    return {
-      ...central,
-      rua: central.rua ?? undefined,       // Convert null to undefined
-      bairro: central.bairro ?? undefined, // Convert null to undefined
-      users: usuarios
-    };
-}
+//     // 3) Retorna tudo empacotado em um único objeto
+//     // return {
+//     //   ...central,
+//     //   rua: central.rua ?? undefined,       // Convert null to undefined
+//     //   bairro: central.bairro ?? undefined, // Convert null to undefined
+//     //   users: usuarios
+//     // };
+// }
 }

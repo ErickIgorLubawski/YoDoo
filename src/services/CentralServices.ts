@@ -1,36 +1,87 @@
 // src/services/CentralServices.ts
 import { prisma } from '../config/db';
-import { CentralDTO } from "../DTOs/CentralDTO";
+import { CentralinfoDTO, CentralUpdateDTO } from "../DTOs/CentralDTO";
 
 export class CentralServices {
 
-  async create(data: CentralDTO) {
-    return await prisma.centrais.create({ data });
+  async create(data: CentralinfoDTO) {
+    console.log("payload Mongo (original):", data);
+    //const payload = omit(data, ['ipCentralMRD']); // já filtra o campo
+    // Posso usar essa opção ai retiro somente 1 campo ao inves de um novo DTO 
+    //1) Retiramos ipCentralMRD (e qualquer outro campo que não exista no schema Prisma)
+    //    usando destructuring / rest:
+    const {
+      ipCentralMRD,  // campo que queremos omitir
+      ...payload     // payload agora contém todos os outros campos de data, exceto ipCentralMRD
+    } = data;
+
+    // 2) Opcional: se desejar conferir no console o objeto exato que passará ao Prisma:
+    console.log("payload Mongo (sem ipCentralMRD):", payload);
+
+    // 3) Agora criamos usando apenas as chaves que existem no modelo Centrais do Prisma
+    //    (assegure-se de que seu schema.prisma tem exatamente esses nomes abaixo)
+    try {
+      const created = await prisma.centrais.create({
+        data: {
+          device_id: payload.device_id,
+          nomeEdificio: payload.nomeEdificio,
+          numero: payload.numero,
+          rua: payload.rua,
+          bairro: payload.bairro,
+          ip_local: payload.ip_local,
+          ip_VPN: payload.ip_VPN,
+          mac: payload.mac,
+          version: payload.version,
+          // NÃO incluímos ipCentralMRD aqui, pois já o removemos
+          // createdAt e updatedAt serão gerados automaticamente pelo Prisma
+        },
+      });
+
+      return created;
+    } catch (err: any) {
+      console.error("⛔️ Erro ao criar Centrais no Prisma:", err);
+      throw err;
+    }
   }
   async findByIP(id: string) {
     return await prisma.centrais.findFirst({
       where: { device_id: id }
     });
   }
-
   async searchIdCentral(ipCentralMRD: any) {
     const central = await prisma.centrais.findFirst({
       where: {
-        ipCentralMRD: ipCentralMRD,
+        //ipCentralMRD: ipCentralMRD,
       },
       select: {
         device_id: true,
       },
     });
-  
+
     return central;
   }
-  
   async list() {
     return await prisma.centrais.findMany();
   }
   async getById(device_id: string) {
     return await prisma.centrais.findUnique({ where: { device_id } });
+  }
+  async update(data: CentralUpdateDTO) {
+    const { device_id, ...rest } = data;
+    
+    // Remove campos undefined do objeto
+    const updateData = Object.fromEntries(
+      Object.entries(rest).filter(([_, value]) => value !== undefined)
+    );
+
+    // Atualiza o documento no MongoDB usando Prisma
+    return await prisma.centrais.update({
+      where: { device_id },
+      data: updateData,
+    });
+  }
+  async delete(device_id: string) {
+    return await prisma.centrais.delete({ where: { device_id } });
   }
   async getByDeviceIds(deviceIds: string[]) {
     return await prisma.centrais.findMany({
@@ -40,15 +91,5 @@ export class CentralServices {
         }
       }
     });
-  }
-  async update(data: CentralDTO) {
-    const { device_id ,ipCentralMRD, nomeEdificio, numero, rua, bairro } = data;
-    return await prisma.centrais.update({
-      where: { device_id },
-      data: { ipCentralMRD, nomeEdificio, numero, rua, bairro }
-    });
-  }
-  async delete(device_id: string) {
-    return await prisma.centrais.delete({ where: { device_id } });
   }
 }

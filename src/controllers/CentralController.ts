@@ -1,119 +1,120 @@
 // src/controllers/CentralController.ts
 import { FastifyRequest, FastifyReply } from "fastify";
 import { CentralServices } from "../services/CentralServices";
-import { CentralDTO } from "../DTOs/CentralDTO";
+import { CentralDTO, CentralinfoDTO, CentralUpdateDTO } from "../DTOs/CentralDTO";
 import { logExecution } from "../utils/logger";
+import { RequestEquipamento } from "./RequestEquipamento";
 
 export class CentralController {
 
   async create(request: FastifyRequest, reply: FastifyReply) {
+
     const iprequest = request.ip
 
-
-    const Central = request.body as CentralDTO;
-    if (!Central.ipCentralMRD || !Central.nomeEdificio || !Central.numero) {
+    const central = request.body as CentralDTO;
+    if (!central.ipCentralMRD || !central.nomeEdificio || !central.device_id || !central.numero || !central.rua || !central.bairro) {
       return reply.status(400).send({ resp: "Campos obrigatórios: ipCentralMRD, nomeEdificio e numero" });
     }
 
-      try {
-        const service = new CentralServices();
-        const exists = await service.findByIP(Central.device_id);
+    try {
 
-        if (exists) {
-          return reply.status(409).send({ resp: "Já existe uma central com esse com esse id." });
-        }
 
-        const central = await service.create(Central);
-        await logExecution({ ip: iprequest, class: "CentralController",function: "create",process: "Criação da central",description: "sucess",});;
-        return reply.status(200).send({task: "SUCESS.", resp: central});
+      const service = new CentralServices();
+      const exists = await service.findByIP(central.device_id);
 
-      } catch (error: any) {
-        await logExecution({ ip: iprequest, class: "CentralController",function: "create",process: "Criação da central",description: "error",});;
+      if (exists) {
+        return reply.status(409).send({ resp: "Já existe uma central com esse com esse id." });
+      }
+
+      const ipcentralmrd = central.ipCentralMRD.replace("http://", "").replace("https://", "")
+
+      const requestequipamento = new RequestEquipamento()
+      const infocentral = await requestequipamento.searchInfoCentral(ipcentralmrd)
+
+      const completeCenter: CentralinfoDTO = {
+        // tudo que veio do front
+        device_id: central.device_id,
+        ipCentralMRD: central.ipCentralMRD,
+        nomeEdificio: central.nomeEdificio,
+        numero: central.numero,
+        rua: central.rua,
+        bairro: central.bairro,
+        version: infocentral.resp.version,
+        ip_local: infocentral.resp.ip_local,
+        ip_VPN: '192.168.101.3:443',//infocentral?.resp.ip_VPN,
+        mac: infocentral.resp.mac,
+      };
+
+      const responseDbCentral = await service.create(completeCenter);
+      await logExecution({ ip: iprequest, class: "CentralController", function: "create", process: "Criação da central", description: "sucess", });;
+      return reply.status(200).send({ task: "SUCESS.", resp: responseDbCentral });
+    } catch (error: any) {
+      await logExecution({ ip: iprequest, class: "CentralController", function: "create", process: "Criação da central", description: "error", });;
       return reply.status(500).send({ resp: "Erro interno do servidor" });
     }
   }
-
   async list(request: FastifyRequest, reply: FastifyReply) {
+
     const iprequest = request.ip
+    const { device_id } = request.query as { device_id: string };
 
     try {
+      if (!device_id) {
         const service = new CentralServices();
         const centrals = await service.list();
-        await logExecution({ ip: iprequest, class: "CentralController",function: "list",process: "lista as centrais",description: "sucess",});;
-        return reply.status(200).send({task: "SUCESS.", resp: centrals});
-      } catch (error: any) {
-        await logExecution({ ip: iprequest, class: "CentralController",function: "list",process: "lista as centrais",description: "error",});;
-      return reply.status(500).send({task:  "Erro ao listar centrais."
-      });
-    }
-  }
-
-  async getById(request: FastifyRequest, reply: FastifyReply) {
-    const iprequest = request.ip
-
-    const { idYD } = request.params as { idYD: string };
-
-      if (!idYD) {
-        return reply.status(400).send({rror: "ID é obrigatório"});
+        await logExecution({ ip: iprequest, class: "CentralController", function: "list", process: "lista todas as centrais", description: "sucess", });;
+        return reply.status(200).send({ task: "SUCESS.", resp: centrals });
       }
 
-      try {
-        const service = new CentralServices();
-        const central = await service.getById(idYD);
+      const service = new CentralServices();
+      const central = await service.getById(device_id);
 
-        await logExecution({ ip: iprequest, class: "CentralController",function: "getById",process: "lista central por id",description: "sucess",});;
-        return reply.status(200).send({ task: "SUCESS.", resp: central});
-      } catch (error: any) {
-        await logExecution({ ip: iprequest, class: "CentralController",function: "getById",process: "lista central por id",description: "error",});;
-        return reply.status(404).send({ task: "Central não encontrada"});
+      await logExecution({ ip: iprequest, class: "CentralController", function: "getById", process: "lista central por id", description: "sucess", });;
+        return reply.status(200).send({ task: "SUCESS.", resp: central });
+    } catch (error: any) {
+      await logExecution({ ip: iprequest, class: "CentralController", function: "getById", process: "lista central por id", description: "error", });;
+        return reply.status(404).send({ task: "Central não encontrada" });
     }
   }
-
   async update(request: FastifyRequest, reply: FastifyReply) {
+
     const iprequest = request.ip
-    
-    //const body = request.body as any;
-    //const id = body._id || body.id;
+    const central = request.body as CentralUpdateDTO;
 
-    const Central = request.body as CentralDTO;
-
-
-    if (!Central.device_id || !Central.ipCentralMRD || !Central.nomeEdificio || !Central.numero) {
+    if (!central.device_id) {
       return reply.status(400).send({ error: "Campos obrigatórios: id, ipCentralMRD, nomeEdificio e numero" });
     }
 
     try {
-      const service = new CentralServices();
-      const updated = await service.update(Central);
 
-      await logExecution({ ip: iprequest, class: "CentralController",function: "update",process: "atualiza central",description: "sucess",});;
-      return reply.status(200).send({ task: "SUCESS.", resp: updated});
+      const service = new CentralServices();
+      const responseDbCentral = await service.update(central);
+
+      await logExecution({ ip: iprequest, class: "CentralController", function: "update", process: "atualiza central", description: "sucess", });;
+      return reply.status(200).send({ task: "SUCESS.", resp: responseDbCentral });
     } catch (error: any) {
-      await logExecution({ ip: iprequest, class: "CentralController",function: "update",process: "atualiza central",description: "error",});;
-      return reply.status(404).send({ resp: "Central não encontrada"});
+      await logExecution({ ip: iprequest, class: "CentralController", function: "update", process: "atualiza central", description: "error", });;
+      return reply.status(404).send({ resp: "Central não encontrada" });
     }
   }
-
   async delete(request: FastifyRequest, reply: FastifyReply) {
     const iprequest = request.ip
     const Central = request.body as CentralDTO;
     if (!Central.device_id) {
-      return reply.status(400).send({resp: "ID é obrigatório"});
+      return reply.status(400).send({ resp: "ID é obrigatório" });
     }
     try {
       const service = new CentralServices();
       const idcentral = await service.getById(Central.device_id);
       if (!idcentral) {
-        return reply.status(404).send({resp: "Central não encontrada"});
+        return reply.status(404).send({ resp: "Central não encontrada" });
       }
       const deleted = await service.delete(Central.device_id)
-      await logExecution({ ip: iprequest, class: "CentralController",function: "delete",process: "deleta central",description: "sucess",});;
-      return reply.status(200).send({task: "SUCESS",  data: deleted
-      });
-      
+      await logExecution({ ip: iprequest, class: "CentralController", function: "delete", process: "deleta central", description: "sucess", });;
+        return reply.status(200).send({task: "SUCESS", data: deleted});
     } catch (error: any) {
-      await logExecution({ ip: iprequest, class: "CentralController",function: "delete",process: "deleta central",description: "error",});;
-      return reply.status(400).send({resp:"Erro ao deletar central."});
+      await logExecution({ ip: iprequest, class: "CentralController", function: "delete", process: "deleta central", description: "error", });;
+        return reply.status(400).send({ resp: "Erro ao deletar central." });
     }
   }
 }
