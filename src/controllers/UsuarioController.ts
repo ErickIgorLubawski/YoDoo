@@ -16,7 +16,7 @@ export class UsuarioController {
 
   async login(request: FastifyRequest, reply: FastifyReply) {
     const ipusuario = request.ip
-    console.log('Dados do front end: ',request.body)
+    console.log('Dados do front end: ', request.body)
 
     const { usuario, senha } = request.body as { usuario: string; senha: string };
     if (!usuario || !senha) {
@@ -60,13 +60,13 @@ export class UsuarioController {
       // console.log('task da central em request central',task)
 
 
-      const user_idCentral = centralResult.result.user_idDevice?.toString()
+      const user_idEquipamento = centralResult.result.user_idDevice?.toString()
       const idcentral = centralResult.idacessos
-     
+
       // console.log('status resposta da central: ',responseCentral)
-      // console.log('ID do usuario na central: ',user_idCentral)
+      // console.log('ID do usuario na central: ',user_idEquipamento)
       // console.log('id da central: ',idcentral)
-      
+
       if (task.includes("PARSE")) {
         return reply.status(200).send({ task: "PARSE", resp: 'usuario ja cadastrado no equipamento' });
       }
@@ -75,11 +75,11 @@ export class UsuarioController {
       }
       const UsuarioIdCentral: UsuarioIdCentralDTO = {
         ...UsuarioDTO,
-        user_idCentral,
+        user_idEquipamento,
         idcentral: idcentral.join(','),
       };
 
-    // Teste pra mais de uma central equipamento
+      // Teste pra mais de uma central equipamento
       // const UsuarioIdCentral: UsuarioIdCentralDTO = {
       //   name: 'Erick DEV',
       //   idYD: '10',
@@ -89,13 +89,13 @@ export class UsuarioController {
       //   acessos: ['4408801109345045'],
       //   bio: 'testede bio',
       //   base64: '/9j/4AA',
-      //   user_idCentral: '178',
+      //   user_idEquipamento: '178',
       //   idcentral: '1'
       // }
       const service = new UsuarioServices();
       const exists = await service.findByIdYD(UsuarioDTO.idYD);
-      
-      if (!exists ) {
+
+      if (!exists) {
         const usuario = await service.createUserAcess(UsuarioIdCentral);
         await logExecution({ ip: ipusuario, class: "UsuarioController", function: "createbiometria", process: "criação de biometria", description: "sucess", });;
         return reply.status(200).send({ task: "SUCESS", resp: usuario });
@@ -115,10 +115,10 @@ export class UsuarioController {
 
     try {
       const { idyd } = request.query as { idyd: string };
-      
-      if(!idyd){
+
+      if (!idyd) {
         const usuario = await service.list();
-          await logExecution({ ip: ipusuario, class: "UsuarioController", function: "list", process: "listar usuarios", description: "sucess", });;
+        await logExecution({ ip: ipusuario, class: "UsuarioController", function: "list", process: "listar usuarios", description: "sucess", });;
         return reply.status(200).send({ task: "SUCESS.", resp: usuario });
       }
       const usuarioid = await service.getById(idyd);
@@ -152,8 +152,10 @@ export class UsuarioController {
     }
   }
   async listusersequipamento(request: FastifyRequest, reply: FastifyReply) {
-     const ipusuario = request.ip
-    const { equipamento } = request.params as { equipamento: string }
+    const ipusuario = request.ip
+    const { equipamento } = request.query as { equipamento: string }
+
+    console.log(equipamento)
 
     if (!equipamento || typeof equipamento !== "string" || equipamento.trim() === "") {
       return reply.status(400).send({ task: "ERROR", resp: 'Preencher Id do equipamento' });
@@ -161,7 +163,7 @@ export class UsuarioController {
     try {
       const service = new UsuarioServices();
 
-      const usuariosnoequipamento =  await service.findUsersByEquipamento(equipamento)
+      const usuariosnoequipamento = await service.findUsersByEquipamento(equipamento)
 
       if (!usuariosnoequipamento) {
         return reply.status(404).send({ resp: "Cliente não encontrado(a)" });
@@ -174,27 +176,28 @@ export class UsuarioController {
     }
   }
   async listuserslocais(request: FastifyRequest, reply: FastifyReply) {
-    const ipusuario = request.ip
-   const { central } = request.params as { central: string }
-   if (!central || typeof central !== "string" || central.trim() === "") {
-     return reply.status(400).send({ task: "ERROR", resp: 'Preencher Id do equipamento' });
-   }
-   try {
-     const service = new UsuarioServices();
 
-     //const central = '22'
-     //const usuarioncentral =  await service.findCentralUsers(central)
-    const usuarioncentral = ''
-     if (!usuarioncentral) {
-       return reply.status(404).send({ resp: "Cliente não encontrado(a)" });
-     }
-     await logExecution({ ip: ipusuario, class: "UsuarioController", function: "listusers", process: "listar usuario no equipamento", description: "sucess", });;
-     return reply.status(200).send({ task: "SUCESS", resp: usuarioncentral });
-   } catch (error: any) {
-     await logExecution({ ip: ipusuario, class: "UsuarioController", function: "listusers", process: "listar usuario no equipamento", description: "error", });;
-     return reply.status(404).send({ task: "ERROR", resp: 'cliente não encontrado' });
-   }
- }
+    const ipusuario = request.ip
+    const { central } = request.query as { central: string }
+    if (!central || typeof central !== "string" || central.trim() === "") {
+      return reply.status(400).send({ task: "ERROR", resp: 'Preencher Id do equipamento' });
+    }
+    try {
+      const service = new UsuarioServices();
+
+      //const central = '22'
+      const usuarioncentral =  await service.findCentralUsers(central)
+      //const usuarioncentral = ''
+      // if (!usuarioncentral) {
+      //   return reply.status(404).send({ resp: "Cliente não encontrado(a)" });
+      // }
+      await logExecution({ ip: ipusuario, class: "UsuarioController", function: "listusers", process: "listar usuario no equipamento", description: "sucess", });;
+      return reply.status(200).send({ task: "SUCESS", resp: usuarioncentral });
+    } catch (error: any) {
+      await logExecution({ ip: ipusuario, class: "UsuarioController", function: "listusers", process: "listar usuario no equipamento", description: "error", });;
+      return reply.status(404).send({ task: "ERROR", resp: 'cliente não encontrado' });
+    }
+  }
   async update(request: FastifyRequest, reply: FastifyReply) {
 
     const ipusuario = request.ip
@@ -209,7 +212,7 @@ export class UsuarioController {
 
       //console.log('usuario no equipamento',centralResult)
 
-      const user_idCentral = centralResult.result.user_idDevice?.toString()
+      const user_idEquipamento = centralResult.result.user_idDevice?.toString()
       const task = centralResult.result.tasks.toString()
       const idcentral = centralResult.idacessos
       const UsuarioIdCentral: UsuarioIdCentralDTO = {
@@ -217,14 +220,14 @@ export class UsuarioController {
         idcentral: idcentral.join(','),
       };
 
-      console.log('payload',UsuarioIdCentral)
+      console.log('payload', UsuarioIdCentral)
 
       if (task.includes("ERROR")) {
         return reply.status(500).send({ task: "ERROR", resp: 'equipamento não encontrada' });
       }
       const service = new UsuarioServices();
       const usuarios = await service.atualizarAcessoEspecifico(UsuarioIdCentral);
-      console.log('usuarios no equipamento',usuarios)
+      console.log('usuarios no equipamento', usuarios)
       await logExecution({ ip: ipusuario, class: "UsuarioController", function: "update", process: "atualizar usuario", description: "sucess", });;
       return reply.status(200).send({ task: "SUCESS.", resp: usuarios });
     } catch (error: any) {

@@ -17,7 +17,7 @@ model usuarios {
   password       String
   bio            String?
   base64         String?
-  user_idCentral String?     @unique
+  user_idEquipamento String?     @unique
   acessos        Json        @db.Json  @default("[]")  // armazena arrays de objetos
   createdAt     DateTime     @default(now())
   // Prisma vai atualizar `updatedAt` sempre que você usar `prisma.centrais.update(...)`
@@ -32,7 +32,7 @@ model usuarios_deletados {
   password       String
   bio            String?
   base64         String?
-  user_idCentral String?     @unique
+  user_idEquipamento String?     @unique
   acessos        Json     @db.Json  @default("[]")  // armazena arrays de objetos
 
   @@map("usuarios_deletados")

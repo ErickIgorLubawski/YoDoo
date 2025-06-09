@@ -11,13 +11,13 @@ export interface UsuarioDTO {
 }
 
 export interface UsuarioIdCentralDTO extends UsuarioDTO{
-  user_idCentral?:   string
+  user_idEquipamento?:   string
   idcentral:        string
 }
 export interface AcessoDoc {
   central:          string;
   equipamento:      string;
-  user_idCentral?:  string;
+  user_idEquipamento?:  string;
   begin_time:       string;
   end_time:         string;
 }
@@ -30,7 +30,7 @@ export interface UsuarioComAcesso {
   acessos: Array<{
     central:       string;
     equipamento:   string;
-    user_idCentral: string;
+    user_idEquipamento: string;
     begin_time:    string;
     end_time:      string;
   }>;

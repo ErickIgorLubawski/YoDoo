@@ -13,11 +13,12 @@ export async function usuarioRoutes(fastify: FastifyInstance, options: FastifyPl
     privateRoutes.addHook("onRequest", verifyToken);
 
     privateRoutes.post("/usuarios/biometria", controller.createBiometria.bind(controller));
-    privateRoutes.get("/usuariosacesso/:equipamento", controller.listusersequipamento.bind(controller));
-    privateRoutes.get("/usuarioslocal/:central", controller.listuserslocais.bind(controller));
+    privateRoutes.get("/usuarios", controller.list.bind(controller));
     privateRoutes.put("/usuarios", controller.update.bind(controller));
     privateRoutes.delete("/usuarios", controller.delete.bind(controller));
-    privateRoutes.get("/usuarios", controller.list.bind(controller));
+   
+    privateRoutes.get("/usuarioslocal", controller.listuserslocais.bind(controller));
+    privateRoutes.get("/usuarios/central", controller.listusersequipamento.bind(controller));
    // privateRoutes.get("/usuarios", controller.list.bind(controller));
 
   });

@@ -19,7 +19,7 @@ async list() {
       acessos: true,
       createdAt: true,
       updatedAt: true,
-      // retira base64,user_idCentral e id banco omitindo-os do select
+      // retira base64,user_idEquipamento e id banco omitindo-os do select
     }
   });
 }
@@ -57,7 +57,7 @@ async delete(idYD: string) {
       password: usuario.password,
       bio: usuario.bio,
       base64: usuario.base64,
-      user_idCentral: usuario.user_idCentral,
+      user_idEquipamento: usuario.user_idEquipamento,
       acessos: usuario.acessos ?? {}, // <- Aqui tratamos caso esteja null
     },
   });
@@ -72,7 +72,7 @@ async createUserAcess(data: UsuarioIdCentralDTO) {
   const acessosDocs: AcessoDoc[] = data.acessos.map(equipId => ({
     central:          data.idcentral,                // url da central
     equipamento:      equipId,                       // equipamento único
-    user_idCentral:   data.user_idCentral,           // string
+    user_idEquipamento:   data.user_idEquipamento,           // string
     begin_time:       data.begin_time,
     end_time:         data.end_time,
   }));
@@ -95,7 +95,7 @@ async  adicionarAcesso(data: UsuarioIdCentralDTO) {
   const novoAcesso: AcessoDoc = {
     central:     data.idcentral,
     equipamento: data.acessos[0],  // supondo um único equipamento por vez
-    user_idCentral:      data.user_idCentral,
+    user_idEquipamento:      data.user_idEquipamento,
     begin_time:  data.begin_time,
     end_time:    data.end_time,
   };
@@ -219,8 +219,17 @@ async atualizarAcessoEspecifico(data: UsuarioIdCentralDTO) {
     where: { idYD: data.idYD },
     data: atualizacoes,
   });
-
-  return usuarioAtualizado;
+  return {
+    id: usuarioAtualizado.id,
+    name: usuarioAtualizado.name,
+    idYD: usuarioAtualizado.idYD,
+    password: usuarioAtualizado.password,
+    bio: usuarioAtualizado.bio,
+    acessos: usuarioAtualizado.acessos,
+    createdAt: usuarioAtualizado.createdAt,
+    updatedAt: usuarioAtualizado.updatedAt,
+    
+  }
 }
 //ATUALIZA ARRAY INTEIRO
 async  atualizarUsuarioEAcessos(data: UsuarioIdCentralDTO) {
@@ -291,60 +300,52 @@ async findUsersByEquipamento(equipamentoId: string): Promise<UsuarioComAcesso[]>
     // Forçando o cast para nosso tipo
     return usuarios as unknown as UsuarioComAcesso[];
 }
-// async findCentralUsers(deviceId: string): Promise<CentralInfo & { users: UsuarioResumo[] }> {
-//     // 1) Encontra a central exata
-//     const central = await prisma.centrais.findUnique({
-//       where: { device_id: deviceId },
-//       select: {
-//         device_id:    true,
-//         //ipCentralMRD: true,
-//         nomeEdificio: true,
-//         numero:       true,
-//         rua:          true,
-//         bairro:       true
-//       },
-//     });
+async findCentralUsers(deviceId: string) {
+  // 1) Encontra a central
+  const central = await prisma.centrais.findUnique({
+    where: { device_id: deviceId },
+    select: {
+      device_id: true,
+      nomeEdificio: true,
+      numero: true,
+      rua: true,
+      bairro: true
+    },
+  });
 
-//     if (!central) {
-//       throw new Error(`Central com device_id="${deviceId}" não encontrada`);
-//     }
+  if (!central) {
+    throw new Error(`Central com device_id="${deviceId}" não encontrada`);
+  }
 
-//     // 2) Agregação no Mongo para buscar apenas name/idYD dos usuários que tenham acessos.central == deviceId
-//     //    Usamos prisma.$runCommandRaw porque precisamos filtrar dentro do array JSON "acessos"
-//     const raw = await prisma.$runCommandRaw({
-//       aggregate: "teste_usuarios", // nome exato da coleção de usuários
-//       pipeline: [
-//         // 2a) MATCH: filtra só usuários cujo array acessos conteha um item com "central" == deviceId
-//         { $match: { "acessos.central": deviceId } },
+  // 2) Busca os usuários com acessos.central === deviceId
+  const raw = await prisma.$runCommandRaw({
+    aggregate: "teste_usuarios",
+    pipeline: [
+      {
+        $match: {
+          acessos: { $elemMatch: { central: deviceId } }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          name: 1,
+          idYD: 1,
+          acessos: {
+            $filter: {
+              input: "$acessos",
+              as: "ac",
+              cond: { $eq: ["$$ac.central", deviceId] }
+            }
+          }
+        }
+      }
+    ],
+    cursor: {}
+  });
 
-//         // 2b) PROJECT: mantemos só _id=0 (omitir), name e idYD dos usuários
-//         //     e filtramos o próprio array 'acessos' (não é obrigatório, pois aqui só precisamos dos dados do usuário,
-//         //     mas deixo como exemplo caso queira limitar a apenas 1 item do array)
-//         {
-//           $project: {
-//             _id: 0,
-//             name: 1,
-//             idYD: 1
-//             // Se você quisesse retornar também, por exemplo, o sub‐array de "acessos" que bate com a central,
-//             // poderia incluir um bloco "acessos: { $filter: … }", mas como no seu novo requisito
-//             // você só precisa dos usuários, deixamos de fora qualquer project sobre o array "acessos".
-//           }
-//         }
-//       ],
-//       cursor: {} // obrigatório para agregação bruta via runCommandRaw
-//     });
+  const usuarios = (raw as any).cursor.firstBatch as UsuarioResumo[];
 
-//     // O resultado virá como:
-//     // { cursor: { firstBatch: [ { name, idYD }, { name, idYD }, … ], id: 0 }, ok: 1 }
-//     // O Prisma “unwrap” internamente, de modo que `raw` já tende a ser = [ { name, idYD }, … ].
-//     const usuarios = (raw as any).cursor.firstBatch as UsuarioResumo[];
-
-//     // 3) Retorna tudo empacotado em um único objeto
-//     // return {
-//     //   ...central,
-//     //   rua: central.rua ?? undefined,       // Convert null to undefined
-//     //   bairro: central.bairro ?? undefined, // Convert null to undefined
-//     //   users: usuarios
-//     // };
-// }
+  return usuarios;
+}
 }
