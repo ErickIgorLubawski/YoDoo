@@ -1,16 +1,19 @@
 import Fastify from 'fastify';
-import { connectDB, prisma } from './config/db';
+import cors from '@fastify/cors';
+import { connectDB } from './config/db';
 import { centralRoutes } from './routes/centrais-router';
 import { equipamentoRoutes } from './routes/equipamentos-router';
-import cors from '@fastify/cors';
 import { usuarioRoutes } from './routes/usuario-router';
 import { logExecution } from './utils/logger';
 
 
 const app = Fastify({logger: true});
 
+// Configuração de CORS para permitir preflight OPTIONS e envio de Authorization
+
+  
+
 app.setErrorHandler((error, request, reply) => {
-    
     reply.status(400).send({ task: error.message });
 });
 
@@ -18,6 +21,7 @@ const start = async () => {
 
     try {
         await connectDB(); // testa a conexão com o banco
+        
         await app.register(cors)
         await app.register(usuarioRoutes);
         await app.register(centralRoutes);
@@ -28,8 +32,6 @@ const start = async () => {
            throw new Error('Variável de ambiente PORTA_CENTRAL não definida.');
         }
         await app.listen({ port: +porta, host: '0.0.0.0' });
-
-
         console.log(`✅ Servidor iniciado na porta ${process.env.PORTA_SERVER}`);
         console.log(`✅ Porta central ${process.env.PORTA_CENTRAL}`)
 
