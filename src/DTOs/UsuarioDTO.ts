@@ -9,17 +9,16 @@ export interface UsuarioDTO {
   acessos:          string[]
   
 }
-
 export interface UsuarioIdCentralDTO extends UsuarioDTO{
   user_idEquipamento?:   string
-  idcentral:        string
+  idcentral:             string
 }
 export interface AcessoDoc {
-  central:          string;
-  equipamento:      string;
+  central:              string;
+  equipamento:          string;
   user_idEquipamento?:  string;
-  begin_time:       string;
-  end_time:         string;
+  begin_time:           string;
+  end_time:             string;
 }
 export interface UsuarioComAcesso {
   name:      string;
@@ -28,11 +27,11 @@ export interface UsuarioComAcesso {
   bio:       string;
   base64:    string;
   acessos: Array<{
-    central:       string;
-    equipamento:   string;
+    central:            string;
+    equipamento:        string;
     user_idEquipamento: string;
-    begin_time:    string;
-    end_time:      string;
+    begin_time:         string;
+    end_time:           string;
   }>;
 }
 export interface CentralInfo {
@@ -43,27 +42,10 @@ export interface CentralInfo {
   rua?:         string;
   bairro?:      string;
 }
-
 export interface UsuarioResumo {
-  name: string;
-  idYD: string;
+  name:       string;
+  idYD:       string;
 }
-// export interface UsuarioCentralDTO{
-//     idYD?:             string
-//     password?:         string
-//     begin_time?:       string
-//     end_time?:         string
-//     bio?:              string
-//     base64?:           string
-//     acessos:           string[]
-//     user_idCentral?:   number
-// }
-
-// export interface DeleteUsuarioDTO extends UsuarioDTO{
-//   idYD:             string
-//   acessos:          string[]
-
-// }
 
 
 

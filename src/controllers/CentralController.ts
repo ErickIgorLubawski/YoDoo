@@ -1,7 +1,7 @@
 // src/controllers/CentralController.ts
 import { FastifyRequest, FastifyReply } from "fastify";
 import { CentralServices } from "../services/CentralServices";
-import { CentralDTO, CentralinfoDTO, CentralUpdateDTO } from "../DTOs/CentralDTO";
+import { CentralDTO, CentralinfoDTO, CentralUpdateDTO, CentralWithStatusDTO } from "../DTOs/CentralDTO";
 import { logExecution } from "../utils/logger";
 import { RequestEquipamento } from "./RequestEquipamento";
 
@@ -39,10 +39,12 @@ export class CentralController {
         numero: central.numero,
         rua: central.rua,
         bairro: central.bairro,
+        //dados central
         version: infocentral.resp.version,
         ip_local: infocentral.resp.ip_local,
-        ip_VPN: '192.168.101.3:443',//infocentral?.resp.ip_VPN,
+        ip_VPN: '192.168.101.3:557',//infocentral?.resp.ip_VPN,
         mac: infocentral.resp.mac,
+        status: 'online', // Inicialmente offline, será atualizado posteriormente
       };
 
       const responseDbCentral = await service.create(completeCenter);
@@ -53,6 +55,7 @@ export class CentralController {
       return reply.status(500).send({ resp: "Erro interno do servidor" });
     }
   }
+
   async list(request: FastifyRequest, reply: FastifyReply) {
 
     const iprequest = request.ip
@@ -62,8 +65,21 @@ export class CentralController {
       if (!device_id) {
         const service = new CentralServices();
         const centrals = await service.list();
+      
+        const statusRequester = new RequestEquipamento();
+        const centralsWithStatus: CentralWithStatusDTO[] = await Promise.all(
+          centrals.map(async (central: any) => {
+            const ip = central.ip_VPN;
+            const status = await statusRequester.Status(ip);
+            
+            return {
+              ...central,
+              status
+            };
+          })
+        );
         await logExecution({ ip: iprequest, class: "CentralController", function: "list", process: "lista todas as centrais", description: "sucess", });;
-        return reply.status(200).send({ task: "SUCESS.", resp: centrals });
+        return reply.status(200).send({ task: "SUCESS.", resp: centralsWithStatus });
       }
 
       const service = new CentralServices();
@@ -76,6 +92,15 @@ export class CentralController {
         return reply.status(404).send({ task: "Central não encontrada" });
     }
   }
+
+
+
+
+
+
+  
+
+
   async update(request: FastifyRequest, reply: FastifyReply) {
 
     const iprequest = request.ip

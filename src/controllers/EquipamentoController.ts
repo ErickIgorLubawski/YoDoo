@@ -1,7 +1,7 @@
 // src/controllers/EquipmentController.ts
 import { FastifyRequest, FastifyReply } from "fastify";
 import { EquipamentoServices } from "../services/EquipamentoServices";
-import { EquipamentoDTO, EquipamentoUpdateDTO } from "../DTOs/EquipamentoDTO";
+import { EquipamentoDTO, EquipamentoUpdateDTO,EquipamentoWithStatusDTO  } from "../DTOs/EquipamentoDTO";
 import { logExecution } from "../utils/logger";
 import { RequestEquipamento } from "../controllers/RequestEquipamento"
 import { CentralServices } from "../services/CentralServices";
@@ -14,11 +14,8 @@ export class EquipamentoController {
     const iprequest = request.ip
     const { ipcentralmrd } = request.query as { ipcentralmrd: string };
 
-    console.log('params', ipcentralmrd)
-
-
     if (!ipcentralmrd) {
-      return reply.status(400).send({ task: "ERROR.", resp: 'Preencher IPcentral' });
+      return reply.status(400).send({ task: "ERROR.", resp: 'Preencher ipcentralmrd: Params' });
     }
     try {
 
@@ -40,18 +37,14 @@ export class EquipamentoController {
 
       const idsBanco = new Set(equipamentosdb.map(e => e.device_id));
       // Filtrar apenas os equipamentos da central que NÃO estão no banco
-      // Filtrar apenas os equipamentos da central que NÃO estão no banco
       const novosEquipamentos = listaEquipamentoscentral.filter((eq: { device_id: string }) =>
         !idsBanco.has(eq.device_id)
       );
-
-
       if (novosEquipamentos.length === 0) {
         // Nenhum novo equipamento, retorna os da central
         await logExecution({ ip: iprequest, class: "EquipamentoController", function: "create", process: "nenhum novo equipamento", description: "nenhum novo para cadastrar", });
         return reply.status(200).send({ task: "SUCESS.", resp: listaEquipamentoscentral, message: "Nenhum novo equipamento cadastrado. Apenas retorno da central.", });
       }
-
       console.log('novos para cadastrar:', novosEquipamentos);
       // Mapear os dados corretamente e salvar um a um
       for (const equip of novosEquipamentos) {
@@ -61,10 +54,11 @@ export class EquipamentoController {
           mac: equip.mac,
           central_id: central_id ?? '',
           device_hostname: equip.name,
+          status: 'online'
         });
       }
       await logExecution({ ip: iprequest, class: "EquipamentoController", function: "list", process: "list equipamento", description: "sucess", });;
-      return reply.status(200).send({ task: "SUCESS.", resp: listaEquipamentoscentral });
+      return reply.status(200).send({ task: "SUCESS.", resp: 'novos equipamentos criado no banco',listaEquipamentoscentral });
     } catch (err: any) {
       await logExecution({ ip: iprequest, class: "EquipamentoController", function: "create", process: "cria equipamento", description: "error", });;
       return reply.status(500).send({ resp: "ERROR" });
@@ -101,30 +95,85 @@ export class EquipamentoController {
     }
   }
   async listEquipamentos(request: FastifyRequest, reply: FastifyReply) {
-    
-    const iprequest = request.ip
-    const { device_id } = request.query as { device_id: string };
-    
-    const service = new EquipamentoServices();
-    if (!device_id) {
-      const listequipamentos = await service.list();
-      return reply.status(200).send({ task: "SUCESS.", resp: listequipamentos });
-    }
-    try {
+    const ipRequest = request.ip;
+    const { device_id } = request.query as { device_id?: string };
 
-      const service = new EquipamentoServices();
-      const equipmento = await service.findByIdYD(device_id);
+    const equipamentoService = new EquipamentoServices();
+    const statusRequester = new RequestEquipamento();
 
-      if (!equipmento) {
-        return reply.status(404).send({ resp: "Equipamento não encontrado." });
+    // 1) Se recebeu device_id, mantém fluxo antigo
+    if (device_id) {
+      try {
+        const equipamento = await equipamentoService.findByIdYD(device_id);
+        if (!equipamento) {
+          return reply.status(404).send({ resp: 'Equipamento não encontrado.' });
+        }
+
+        await logExecution({ip: ipRequest,class: 'EquipamentoController',function: 'getByDeviceId', process: 'lista equipamento por id',description: 'sucess'});
+        return reply.status(200).send({ task: 'SUCESS.', resp: equipamento });
+      } catch (err: any) {
+        await logExecution({ ip: ipRequest,class: 'EquipamentoController', function: 'getByDeviceId',process: 'lista equipamento por id',description: 'error'
+        });
+        return reply.status(404).send({ resp: err.message || 'Equipamento não encontrado.' });
       }
-      await logExecution({ ip: iprequest, class: "EquipamentoController", function: "getByDeviceId", process: "lista equipamento por id ", description: "sucess", });;
-      return reply.status(200).send({ task: "SUCESS.", resp: equipmento });
+    }
+
+    // 2) Sem device_id → busca todos + status
+    try {
+      // 2.1) Buscar todos equipamentos no DB
+      const equipamentos = await equipamentoService.list();
+
+      // 2.2) extrair IDs únicos de central
+      const centralIds = Array.from(new Set(equipamentos.map(e => e.central_id)));
+      
+      // 2.3) batch fetch das centrais
+      const centralService = new CentralServices();
+      const centrals = await Promise.all(
+        centralIds.map(id => centralService.getById(id))
+      );
+
+      console.log('2.3 - Centrals fetched:', centrals);
+      // 2.4) montar map de central_id → ip_completo
+      const centralMap: Record<string, string> = {};
+      const validCentrals = centrals.filter(
+        (c): c is { id: string; device_id: string; mac: string; createdAt: Date; updatedAt: Date; ip_local: string; ip_VPN: string | null; nomeEdificio: string; numero: string; rua: string; bairro: string; version: string; status: 'online'} =>
+          c != null
+      );
+      console.log('2.4 - Central map:', validCentrals);
+      
+      validCentrals.forEach(c => {
+        const rawIp = c.ip_VPN ?? c.ip_local;
+        centralMap[c.device_id] = rawIp;
+      });
+
+      // 2.5) paralelizar status
+      const equipamentosWithStatus: EquipamentoWithStatusDTO[] =
+        await Promise.all(
+          equipamentos.map(async eq => {
+            const ipCentral = centralMap[eq.central_id] || '';
+            const status = await statusRequester.StatusEquipamento(ipCentral,eq.ip);
+      
+            return {
+              ...eq,
+              status,
+              device_hostname: eq.device_hostname ?? '',
+              createdAt: eq.createdAt.toISOString(),
+              updatedAt: eq.updatedAt.toISOString()
+            };
+          })
+        );
+
+      await logExecution({ ip: ipRequest,class: 'EquipamentoController',function: 'listEquipamentos', process: 'lista todos equipamentos com status',description: 'sucess' });
+
+      return reply.status(200).send({ task: 'SUCESS.', resp: equipamentosWithStatus });
+
     } catch (err: any) {
-      await logExecution({ ip: iprequest, class: "EquipamentoController", function: "getByDeviceId", process: "lista equipamento por id ", description: "error", });;
-      return reply.status(404).send({ resp: err.message || "Equipamento não encontrado." });
+      await logExecution({ip: ipRequest,class: 'EquipamentoController',function: 'listEquipamentos',process: 'erro ao listar equipamentos',description: 'error' });
+
+      return reply.status(500).send({ resp: 'Erro ao buscar equipamentos.' });
     }
   }
+
   async update(request: FastifyRequest, reply: FastifyReply) {
     const iprequest = request.ip
     const equipamento = request.body as EquipamentoUpdateDTO;
@@ -144,6 +193,7 @@ export class EquipamentoController {
       }
       //pega o id da central
       const idcentral = equipamentodb?.central_id
+      console.log('idcentral: ', idcentral)
       if (!idcentral) {
         return reply.status(404).send({ resp: "Central não encontrada para este equipamento." });
       }
@@ -151,6 +201,7 @@ export class EquipamentoController {
       //pega os dados da central pra pegar o ip da central
       const central        = await servicecentral.getById(idcentral);
       const ipcentralmrd   = central?.ip_VPN;
+      console.log(ipcentralmrd)
       if (!ipcentralmrd) {
         return reply.status(404).send({ resp: "Central não encontrada no db." });
       }
@@ -205,3 +256,5 @@ export class EquipamentoController {
 // "mac": "FC:52:CE:8D:52:B4",
 // "central_id": "11",
 // "device_hostname": "Teste 1"
+
+//Criar mais uma função onde lsita todos equipamentos do banco

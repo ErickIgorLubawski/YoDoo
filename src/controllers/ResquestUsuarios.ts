@@ -20,6 +20,7 @@ export class RequestCentral {
 
     const equipamentoSvc = new EquipamentoServices();
     const equipamentos = await equipamentoSvc.getIpsAndCentralByDeviceIds(data.acessos);
+    console.log(`1)Equipamentos encontrados: ${equipamentos.length}`);
 
     if (equipamentos.length === 0) {
       throw new Error("Nenhum equipamento encontrado");
@@ -28,6 +29,7 @@ export class RequestCentral {
     const centralIds = Array.from(new Set(equipamentos.map(e => e.central_id)));
     const centralMRD = new CentralServices();
     const centraisIps = await centralMRD.getByDeviceIds(centralIds);
+    console.log('2) Equipamentos centraisIps:', centraisIps);
 
     const centralIpMap: { [centralId: string]: string } = {};
     centraisIps.forEach(c => {

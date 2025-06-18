@@ -4,8 +4,6 @@ import { EquipamentoUpdateDTO } from '../DTOs/EquipamentoDTO';
 
 export class RequestEquipamento {
   
-  //verifica esse parametro, qualquer coisa fazemos 
-  
   async searchInfoEquipamento(ipcentralmrd: any) {
     try {
       const url = `http://${ipcentralmrd}/findEqs`;
@@ -17,7 +15,6 @@ export class RequestEquipamento {
       return {ServerResponse}
     }
   }
-  
   async searchInfoCentral(ipcentralmrd: string) {
     
     try {
@@ -25,6 +22,7 @@ export class RequestEquipamento {
       console.log(ipcentralmrd)
       const url = `http://${ipcentralmrd}/central`;
       const response = await axios.get(url);
+      console.log('confirmação',response.data)
       return response.data;
 
     } catch (err) {
@@ -50,6 +48,29 @@ export class RequestEquipamento {
        return response.data;
     } catch (err) {
       return {ServerResponse}
+    }
+  }
+
+
+  
+  async Status(ip: string): Promise<'online' | 'offline'> {
+    try {
+      const url = `http://${ip}/status`;
+      await axios.get(url, { timeout: 1000 }); // timeout curto evita travar
+      
+      return 'online';
+    } catch (err) {
+      return 'offline';
+    }
+  }
+  async StatusEquipamento(ipCentral: string, ipEquipamento: string): Promise<'online' | 'offline'> {
+    try {
+      const url = `http://${ipCentral}/equipamentos?device_id=${ipEquipamento}`;
+      console.log('url do request: ',url)
+      await axios.get(url, { timeout: 2000 });
+      return 'online';
+    } catch {
+      return 'offline';
     }
   }
 }

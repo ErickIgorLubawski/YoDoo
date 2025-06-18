@@ -7,9 +7,7 @@ export class CentralServices {
   async create(data: CentralinfoDTO) {
     console.log("payload Mongo (original):", data);
     //const payload = omit(data, ['ipCentralMRD']); // já filtra o campo
-    // Posso usar essa opção ai retiro somente 1 campo ao inves de um novo DTO 
-    //1) Retiramos ipCentralMRD (e qualquer outro campo que não exista no schema Prisma)
-    //    usando destructuring / rest:
+
     const {
       ipCentralMRD,  // campo que queremos omitir
       ...payload     // payload agora contém todos os outros campos de data, exceto ipCentralMRD
@@ -19,7 +17,6 @@ export class CentralServices {
     console.log("payload Mongo (sem ipCentralMRD):", payload);
 
     // 3) Agora criamos usando apenas as chaves que existem no modelo Centrais do Prisma
-    //    (assegure-se de que seu schema.prisma tem exatamente esses nomes abaixo)
     try {
       const created = await prisma.centrais.create({
         data: {
@@ -32,6 +29,8 @@ export class CentralServices {
           ip_VPN: payload.ip_VPN,
           mac: payload.mac,
           version: payload.version,
+          status:  'online'//payload.status // Inicialmente online, pode ser atualizado depois
+
           // NÃO incluímos ipCentralMRD aqui, pois já o removemos
           // createdAt e updatedAt serão gerados automaticamente pelo Prisma
         },
