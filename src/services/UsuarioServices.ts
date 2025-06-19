@@ -267,15 +267,18 @@ async  atualizarUsuarioEAcessos(data: UsuarioIdCentralDTO) {
   return usuarioAtualizado;
 }
 async findUsersByEquipamento(equipamentoId: string): Promise<UsuarioComAcesso[]> {
+  try {
     const usuariosnoequipamentoidjson = await prisma.$runCommandRaw({
-      aggregate: "usuarios_2_1",
+      aggregate: "usuarios_2_1", // O nome da coleção
       pipeline: [
         { $match: { "acessos.equipamento": equipamentoId } },
         {
           $project: {
-            _id:      0,
+            _id:      0, // Exclui o _id original
             name:     1,
             idYD:     1,
+            createdAt: 1, // Retorna o campo createdAt (virá como {$date: ...})
+            updatedAt: 1, // Retorna o campo updatedAt (virá como {$date: ...})
             acessos: {
               $filter: {
                 input: "$acessos",
@@ -288,10 +291,34 @@ async findUsersByEquipamento(equipamentoId: string): Promise<UsuarioComAcesso[]>
       ],
       cursor: {}
     });
-    const usuarios = (usuariosnoequipamentoidjson as any).cursor.firstBatch as UsuarioComAcesso[];
 
-    // Forçando o cast para nosso tipo
-    return usuarios as unknown as UsuarioComAcesso[];
+    // NOVO: Processamento para formatar as datas
+    const rawUsuarios = (usuariosnoequipamentoidjson as any).cursor.firstBatch;
+    
+    const usuariosFormatados: UsuarioComAcesso[] = rawUsuarios.map((usuario: any) => {
+      // Verifica se createdAt e updatedAt são objetos com a chave "$date"
+      if (usuario.createdAt && typeof usuario.createdAt === 'object' && usuario.createdAt['$date']) {
+          usuario.createdAt = new Date(usuario.createdAt['$date']).toISOString();
+      }
+      if (usuario.updatedAt && typeof usuario.updatedAt === 'object' && usuario.updatedAt['$date']) {
+          usuario.updatedAt = new Date(usuario.updatedAt['$date']).toISOString();
+      }
+      // Se o seu Prisma `schema.prisma` tem `@map("_id")`, e você precisa do `id` sem o `$oid`
+      // você também pode transformá-lo aqui se o $project incluir _id: 1.
+      // Se você precisa do ID do MongoDB, mas não como ObjectId, pode ser assim:
+      // if (usuario._id && typeof usuario._id === 'object' && usuario._id['$oid']) {
+      //     usuario.id = usuario._id['$oid'];
+      // }
+      // delete usuario._id; // Remove o campo _id se você mapeou para 'id' no modelo e não quer o original.
+
+      return usuario;
+    });
+
+    return usuariosFormatados;
+
+  } catch (error: any) {
+    throw new Error(`Erro ao buscar usuários por equipamento: ${error.message}`);
+  }
 }
 async findCentralUsers(deviceId: string) {
   // 1) Encontra a central

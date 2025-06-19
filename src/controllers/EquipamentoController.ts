@@ -64,8 +64,18 @@ export class EquipamentoController {
     }
   }
   async list(request: FastifyRequest, reply: FastifyReply) {
+    
     const iprequest = request.ip
+    const { central_id } = request.query as { central_id?: string }
+    console.log(central_id)
     try {
+      const equipamentoService = new EquipamentoServices();
+      
+      if (central_id) {
+        const equipamentosnacentral = await equipamentoService.findByCentralId(central_id);
+        console.log(equipamentosnacentral)
+        return reply.status(404).send({ resp: equipamentosnacentral || "id da central não encontrado." });
+      }
       const service = new EquipamentoServices();
       const list = await service.list();
       await logExecution({ ip: iprequest, class: "EquipamentoController", function: "list", process: "list equipamento", description: "sucess", });;
@@ -76,23 +86,23 @@ export class EquipamentoController {
       return reply.status(500).send({ resp: "Erro ao listar equipamentos." });
     }
   }
-  async getById(request: FastifyRequest, reply: FastifyReply) {
-    const iprequest = request.ip
-    const { id } = request.params as { id: string };
-    if (!id) {
-      return reply.status(400).send({ resp: "ID é obrigatório" });
-    }
+  // async getById(request: FastifyRequest, reply: FastifyReply) {
+  //   const iprequest = request.ip
+  //   const { id } = request.params as { id: string };
+  //   if (!id) {
+  //     return reply.status(400).send({ resp: "ID é obrigatório" });
+  //   }
 
-    try {
-      const service = new EquipamentoServices();
-      const equipmento = await service.getById(id);
-      await logExecution({ ip: iprequest, class: "EquipamentoController", function: "getById", process: "lista equipamento por id ", description: "sucess", });;
-      return reply.status(200).send({ task: "SUCESS.", resp: equipmento });
-    } catch (err: any) {
-      await logExecution({ ip: iprequest, class: "EquipamentoController", function: "getById", process: "lista equipamento por id ", description: "error", });;
-      return reply.status(404).send({ resp: err.message });
-    }
-  }
+  //   try {
+  //     const service = new EquipamentoServices();
+  //     const equipmento = await service.getById(id);
+  //     await logExecution({ ip: iprequest, class: "EquipamentoController", function: "getById", process: "lista equipamento por id ", description: "sucess", });;
+  //     return reply.status(200).send({ task: "SUCESS.", resp: equipmento });
+  //   } catch (err: any) {
+  //     await logExecution({ ip: iprequest, class: "EquipamentoController", function: "getById", process: "lista equipamento por id ", description: "error", });;
+  //     return reply.status(404).send({ resp: err.message });
+  //   }
+  // }
   async listEquipamentos(request: FastifyRequest, reply: FastifyReply) {
     const ipRequest = request.ip;
     const { device_id } = request.query as { device_id?: string };
@@ -110,6 +120,7 @@ export class EquipamentoController {
 
         await logExecution({ip: ipRequest,class: 'EquipamentoController',function: 'getByDeviceId', process: 'lista equipamento por id',description: 'sucess'});
         return reply.status(200).send({ task: 'SUCESS.', resp: equipamento });
+
       } catch (err: any) {
         await logExecution({ ip: ipRequest,class: 'EquipamentoController', function: 'getByDeviceId',process: 'lista equipamento por id',description: 'error'
         });

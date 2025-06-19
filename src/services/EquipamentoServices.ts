@@ -18,7 +18,6 @@ export class EquipamentoServices {
   async getById(id: string) {
     return await prisma.equipamentos.findUnique({ where: { id } });
   }
-
   async update(data: EquipamentoUpdateDTO) {
     const { device_id, ...rest } = data;
 
@@ -45,5 +44,13 @@ export class EquipamentoServices {
       },
     });
   }
-
+  async findByCentralId(central_id: string) {
+    try {
+      return await prisma.equipamentos.findMany({
+        where: { central_id: central_id }
+      });
+    } catch (error: any) {
+      throw new Error(`Erro ao buscar equipamentos pela central: ${error.message}`);
+    }
+  }
 }
