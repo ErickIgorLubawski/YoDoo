@@ -10,6 +10,7 @@ export async function equipamentoRoutes(fastify: FastifyInstance, options: Fasti
     privateRoutes.addHook("onRequest", verifyToken);
 
     privateRoutes.get("/equipamentos/centrais", controller.create.bind(controller));
+    privateRoutes.get("/equipamentosdb", controller.list.bind(controller));
     privateRoutes.get("/equipamentos", controller.listEquipamentos.bind(controller));
     privateRoutes.delete("/equipamento", controller.delete.bind(controller));
     privateRoutes.put("/equipamento", controller.update.bind(controller));

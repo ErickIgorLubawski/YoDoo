@@ -8,7 +8,6 @@ import { CentralServices } from "../services/CentralServices";
 
 export class EquipamentoController {
 
-
   async create(request: FastifyRequest, reply: FastifyReply) {
 
     const iprequest = request.ip
@@ -173,7 +172,6 @@ export class EquipamentoController {
       return reply.status(500).send({ resp: 'Erro ao buscar equipamentos.' });
     }
   }
-
   async update(request: FastifyRequest, reply: FastifyReply) {
     const iprequest = request.ip
     const equipamento = request.body as EquipamentoUpdateDTO;
@@ -250,11 +248,3 @@ export class EquipamentoController {
     }
   }
 }
-// "id": "683a19935b7a30303e013a47",
-// "device_id": "1",
-// "ip": "192.168.0.129",
-// "mac": "FC:52:CE:8D:52:B4",
-// "central_id": "11",
-// "device_hostname": "Teste 1"
-
-//Criar mais uma função onde lsita todos equipamentos do banco

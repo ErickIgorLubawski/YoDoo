@@ -53,11 +53,10 @@ export class RequestEquipamento {
 
 
   
-  async Status(ip: string): Promise<'online' | 'offline'> {
+  async Status(ip: string) {
     try {
       const url = `http://${ip}/status`;
-      await axios.get(url, { timeout: 1000 }); // timeout curto evita travar
-      
+      await axios.get(url, { timeout: 3000 }); // timeout curto evita travar
       return 'online';
     } catch (err) {
       return 'offline';

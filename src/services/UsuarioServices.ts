@@ -15,7 +15,6 @@ async list() {
       idYD: true,
       name: true,
       password: true,
-      bio: true,
       acessos: true,
       createdAt: true,
       updatedAt: true,
@@ -31,13 +30,12 @@ async getById(idYD: string) {
         name: true,
         idYD: true,
         password: true,
-        bio: true,
         acessos: true,
         createdAt: true,
         updatedAt: true
       }
     });
-  }
+}
 async delete(idYD: string) {
   // 1. Busca o usuário atual
   const usuario = await prisma.usuarios.findUnique({
@@ -55,9 +53,7 @@ async delete(idYD: string) {
       idYD: usuario.idYD,
       name: usuario.name,
       password: usuario.password,
-      bio: usuario.bio,
       base64: usuario.base64,
-      user_idEquipamento: usuario.user_idEquipamento,
       acessos: usuario.acessos ?? {}, // <- Aqui tratamos caso esteja null
     },
   });
@@ -70,11 +66,11 @@ async delete(idYD: string) {
 async createUserAcess(data: UsuarioIdCentralDTO) {
   // Monta o array de objetos de acesso
   const acessosDocs: AcessoDoc[] = data.acessos.map(equipId => ({
-    central:          data.idcentral,                // url da central
-    equipamento:      equipId,                       // equipamento único
+    central:              data.idcentral,                // url da central
+    equipamento:          equipId,                       // equipamento único
     user_idEquipamento:   data.user_idEquipamento,           // string
-    begin_time:       data.begin_time,
-    end_time:         data.end_time,
+    begin_time:           data.begin_time,
+    end_time:             data.end_time,
   }));
   // Persiste no Mongo via Prisma
   return prisma.usuarios.create({
@@ -82,7 +78,6 @@ async createUserAcess(data: UsuarioIdCentralDTO) {
       name:     data.name,
       idYD:     data.idYD,
       password: data.password,
-      bio:      data.bio,
       base64:   data.base64,
       acessos:  acessosDocs as any     // << array de sub-documentos
     }
@@ -224,7 +219,6 @@ async atualizarAcessoEspecifico(data: UsuarioIdCentralDTO) {
     name: usuarioAtualizado.name,
     idYD: usuarioAtualizado.idYD,
     password: usuarioAtualizado.password,
-    bio: usuarioAtualizado.bio,
     acessos: usuarioAtualizado.acessos,
     createdAt: usuarioAtualizado.createdAt,
     updatedAt: usuarioAtualizado.updatedAt,
@@ -274,7 +268,7 @@ async  atualizarUsuarioEAcessos(data: UsuarioIdCentralDTO) {
 }
 async findUsersByEquipamento(equipamentoId: string): Promise<UsuarioComAcesso[]> {
     const usuariosnoequipamentoidjson = await prisma.$runCommandRaw({
-      aggregate: "teste_usuarios",
+      aggregate: "usuarios_2_1",
       pipeline: [
         { $match: { "acessos.equipamento": equipamentoId } },
         {
@@ -282,7 +276,6 @@ async findUsersByEquipamento(equipamentoId: string): Promise<UsuarioComAcesso[]>
             _id:      0,
             name:     1,
             idYD:     1,
-            bio:      1,
             acessos: {
               $filter: {
                 input: "$acessos",
@@ -319,7 +312,7 @@ async findCentralUsers(deviceId: string) {
 
   // 2) Busca os usuários com acessos.central === deviceId
   const raw = await prisma.$runCommandRaw({
-    aggregate: "teste_usuarios",
+    aggregate: "usuarios_2_1",
     pipeline: [
       {
         $match: {

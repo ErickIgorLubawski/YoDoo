@@ -97,12 +97,12 @@ export class UsuarioController {
 
       if (!exists) {
         const usuario = await service.createUserAcess(UsuarioIdCentral);
-        await logExecution({ ip: ipusuario, class: "UsuarioController", function: "createbiometria", process: "criação de biometria", description: "sucess", });;
-        return reply.status(200).send({ task: "SUCESS", resp: usuario });
+        await logExecution({ ip: ipusuario, class: "UsuarioController", function: "createbiometria", process: "criação de novo acesso ok", description: "sucess", });;
+        return reply.status(200).send({ task: "SUCESS", resp:"criação de novo acesso ok", usuario });
       }
       const usuarios = await service.adicionarAcesso(UsuarioIdCentral);
       await logExecution({ ip: ipusuario, class: "UsuarioController", function: "createbiometria", process: "criação de biometria", description: "sucess", });;
-      return reply.status(200).send({ task: "SUCESS", resp: usuarios });
+      return reply.status(200).send({ task: "SUCESS", resp:"criação de novo usuario ok", usuarios });
 
     } catch (error: any) {
       await logExecution({ ip: ipusuario, class: "UsuarioController", function: "createbiometria", process: "criação de biometria", description: "error", });;
@@ -118,6 +118,7 @@ export class UsuarioController {
 
       if (!idyd) {
         const usuario = await service.list();
+        console.log('usuarios', usuario)
         await logExecution({ ip: ipusuario, class: "UsuarioController", function: "list", process: "listar usuarios", description: "sucess", });;
         return reply.status(200).send({ task: "SUCESS.", resp: usuario });
       }
@@ -212,7 +213,7 @@ export class UsuarioController {
 
       //console.log('usuario no equipamento',centralResult)
 
-      const user_idEquipamento = centralResult.result.user_idDevice?.toString()
+     // const user_idEquipamento = centralResult.result.user_idDevice?.toString()
       const task = centralResult.result.tasks.toString()
       const idcentral = centralResult.idacessos
       const UsuarioIdCentral: UsuarioIdCentralDTO = {

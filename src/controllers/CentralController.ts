@@ -42,7 +42,7 @@ export class CentralController {
         //dados central
         version: infocentral.resp.version,
         ip_local: infocentral.resp.ip_local,
-        ip_VPN: '192.168.101.3:557',//infocentral?.resp.ip_VPN,
+        ip_VPN: '189.101.65.76:557',//infocentral?.resp.ip_VPN,
         mac: infocentral.resp.mac,
         status: 'online', // Inicialmente offline, será atualizado posteriormente
       };
@@ -92,13 +92,6 @@ export class CentralController {
         return reply.status(404).send({ task: "Central não encontrada" });
     }
   }
-
-
-
-
-
-
-  
 
 
   async update(request: FastifyRequest, reply: FastifyReply) {

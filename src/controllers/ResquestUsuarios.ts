@@ -20,7 +20,6 @@ export class RequestCentral {
 
     const equipamentoSvc = new EquipamentoServices();
     const equipamentos = await equipamentoSvc.getIpsAndCentralByDeviceIds(data.acessos);
-    console.log(`1)Equipamentos encontrados: ${equipamentos.length}`);
 
     if (equipamentos.length === 0) {
       throw new Error("Nenhum equipamento encontrado");
@@ -29,7 +28,6 @@ export class RequestCentral {
     const centralIds = Array.from(new Set(equipamentos.map(e => e.central_id)));
     const centralMRD = new CentralServices();
     const centraisIps = await centralMRD.getByDeviceIds(centralIds);
-    console.log('2) Equipamentos centraisIps:', centraisIps);
 
     const centralIpMap: { [centralId: string]: string } = {};
     centraisIps.forEach(c => {
@@ -111,7 +109,7 @@ export class RequestCentral {
 
     const tasks: any[] = [];
     let user_idDevice = 0;
-
+    console.log('payload',payloads)
     for (const request of payloads) {
       try {
         const resp = await axios({
@@ -119,6 +117,9 @@ export class RequestCentral {
           method: request.method,
           data: request.body,
         });
+
+        console.log('resp', resp.data)
+
         const data = resp.data;
         if (data.task) {
           tasks.push(data.task);

@@ -11,38 +11,32 @@ datasource db {
 }
 
 model usuarios {
-  id                 String   @id @default(auto()) @map("_id") @db.ObjectId
+  id                 String       @id @default(auto()) @map("_id") @db.ObjectId
   name               String
-  idYD               String   @unique
+  idYD               String       @unique
   password           String
-  bio                String?
   base64             String?
-  user_idEquipamento String?     @unique
-  acessos            Json        @db.Json  @default("[]")  // armazena arrays de objetos
+  acessos            Json         @db.Json  @default("[]")  // armazena arrays de objetos
   createdAt          DateTime     @default(now())
-  // Prisma vai atualizar `updatedAt` sempre que você usar `prisma.centrais.update(...)`
   updatedAt          DateTime     @updatedAt
 
   @@map("usuarios_2_1")
 }
 model usuarios_deletados {
-  id                  String   @id @default(auto()) @map("_id") @db.ObjectId
+  id                  String      @id @default(auto()) @map("_id") @db.ObjectId
   name                String
-  idYD                String   @unique
+  idYD                String      @unique
   password            String
-  bio                 String?
   base64              String?
-  user_idEquipamento  String?     @unique
-  acessos             Json     @db.Json  @default("[]")  // armazena arrays de objetos
+  acessos             Json        @db.Json  @default("[]")  // armazena arrays de objetos
 
   @@map("usuarios_deletados")
 }
 
 
 model centrais{
-  id              String @id @default(auto()) @map("_id") @db.ObjectId
-  device_id       String @unique   
-  // Campos vindos do front + da central externa
+  id              String          @id @default(auto()) @map("_id") @db.ObjectId
+  device_id       String          @unique   
   ip_local      String
   ip_VPN        String?
   mac           String
@@ -52,36 +46,33 @@ model centrais{
   bairro        String
   version       String
   status        String? 
-  // Prisma vai preencher `createdAt` na inserção
-  createdAt     DateTime @default(now())
-  // Prisma vai atualizar `updatedAt` sempre que você usar `prisma.centrais.update(...)`
-  updatedAt     DateTime @updatedAt
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
 
   @@map("teste_centrais")
 }
 model equipamentos{
-  id              String @id @default(auto()) @map("_id") @db.ObjectId
-  device_id       String @unique
+  id              String          @id @default(auto()) @map("_id") @db.ObjectId
+  device_id       String          @unique
   ip              String
   mac             String
   central_id      String
   status          String? 
   device_hostname String?
-  createdAt       DateTime @default(now())
-  // Prisma vai atualizar `updatedAt` sempre que você usar `prisma.centrais.update(...)`
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
 
 
   @@map("teste_equipamentos")
 }
 model Logs {
-  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  id            String              @id @default(auto()) @map("_id") @db.ObjectId
   ip            String
   class         String
   function      String
   process       String
   description   String
-  datetime      DateTime @default(now())
+  datetime      DateTime           @default(now())
   @@map("teste_logs")
 }
 
