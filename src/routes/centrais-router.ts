@@ -9,10 +9,10 @@ export async function centralRoutes(fastify: FastifyInstance, options: FastifyPl
   fastify.register(async (privateRoutes) => {
     privateRoutes.addHook("onRequest", verifyToken);
 
-    privateRoutes.post("/central", controller.create.bind(controller));
+    privateRoutes.post("/centrais", controller.create.bind(controller));
     privateRoutes.get("/centrais", controller.list.bind(controller));
-    privateRoutes.delete("/central", controller.delete.bind(controller));
-    privateRoutes.put("/central", controller.update.bind(controller));
+    privateRoutes.delete("/centrais", controller.delete.bind(controller));
+    privateRoutes.put("/centrais", controller.update.bind(controller));
   });
 }
 
