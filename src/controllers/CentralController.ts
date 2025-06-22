@@ -42,7 +42,7 @@ export class CentralController {
         //dados central
         version: infocentral.resp.version,
         ip_local: infocentral.resp.ip_local,
-        ip_VPN: '189.101.65.76:557',//infocentral?.resp.ip_VPN,
+        ip_VPN: infocentral?.resp.ip_VPN, //'189.101.65.76:557'
         mac: infocentral.resp.mac,
         status: 'online', // Inicialmente offline, será atualizado posteriormente
       };
