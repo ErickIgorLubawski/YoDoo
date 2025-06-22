@@ -19,7 +19,6 @@ export class RequestEquipamento {
     
     try {
       //Podemos 
-      console.log(ipcentralmrd)
       const url = `http://${ipcentralmrd}/central`;
       const response = await axios.get(url);
       console.log('confirmação',response.data)

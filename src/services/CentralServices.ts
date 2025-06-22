@@ -26,7 +26,7 @@ export class CentralServices {
           rua: payload.rua,
           bairro: payload.bairro,
           ip_local: payload.ip_local,
-          ip_VPN: payload.ip_VPN,
+          ip_VPN: payload.ip_vpn,
           mac: payload.mac,
           version: payload.version,
           status:  'online'//payload.status // Inicialmente online, pode ser atualizado depois
@@ -35,6 +35,7 @@ export class CentralServices {
           // createdAt e updatedAt serão gerados automaticamente pelo Prisma
         },
       });
+      console.log("payload  create", created);
 
       return created;
     } catch (err: any) {

@@ -11,7 +11,7 @@ export interface CentralDTO {
 
 export interface CentralinfoDTO extends  CentralDTO{
     ip_local:     string;
-    ip_VPN:       string;
+    ip_vpn:       string;
     mac:          string;
     version:      string;
     status:       'online' | 'offline';
@@ -25,14 +25,14 @@ export interface CentralinfoDTO extends  CentralDTO{
     rua?:               string;
     bairro?:            string;
     ip_local?:          string;
-    ip_VPN?:            string;
+    ip_vpn?:            string;
     mac?:               string;
     version?:           string;
   }
   export interface CentralWithStatusDTO {
     device_id:    string;
     ip_local:     string;
-    ip_VPN?:      string;
+    ip_vpn?:      string;
     mac:          string;
     nomeEdificio: string;
     numero:       string;
