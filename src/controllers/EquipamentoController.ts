@@ -70,7 +70,7 @@ export class EquipamentoController {
     console.log(central_id)
     try {
       const equipamentoService = new EquipamentoServices();
-      
+      console.log('--- EXECUTANDO VERSÃO CORRIGIDA DE 26/06 ---');
       if (central_id) {
         const equipamentosnacentral = await equipamentoService.findByCentralId(central_id);
         console.log(equipamentosnacentral)
