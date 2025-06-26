@@ -74,7 +74,7 @@ export class EquipamentoController {
       if (central_id) {
         const equipamentosnacentral = await equipamentoService.findByCentralId(central_id);
         console.log(equipamentosnacentral)
-        return reply.status(404).send({ resp: equipamentosnacentral || "id da central não encontrado." });
+        return reply.status(200).send({ task: "SUCESS.", resp: equipamentosnacentral });
       }
       const service = new EquipamentoServices();
       const list = await service.list();

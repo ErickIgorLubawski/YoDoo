@@ -64,21 +64,24 @@ export class CentralController {
       if (!device_id) {
         const service = new CentralServices();
         const centrals = await service.list();
-      
-        const statusRequester = new RequestEquipamento();
-        const centralsWithStatus: CentralWithStatusDTO[] = await Promise.all(
-          centrals.map(async (central: any) => {
-            const ip = central.ip_VPN;
-            const status = await statusRequester.Status(ip);
-            
-            return {
-              ...central,
-              status
-            };
-          })
-        );
+        
+        // Aplicar Mapeia cada central para obter o status
+
+        // const statusRequester = new RequestEquipamento();
+        // const centralsWithStatus: CentralWithStatusDTO[] = await Promise.all(
+        //   centrals.map(async (central: any) => {
+        //     const ip = central.ip_VPN;
+        //     const status = await statusRequester.Status(ip);
+        //     //console.log()
+        //     return {
+        //       ...central,
+        //       status
+        //     };
+        //   })
+        // );
+        
         await logExecution({ ip: iprequest, class: "CentralController", function: "list", process: "lista todas as centrais", description: "sucess", });;
-        return reply.status(200).send({ task: "SUCESS.", resp: centralsWithStatus });
+        return reply.status(200).send({ task: "SUCESS.", resp: centrals });
       }
 
       const service = new CentralServices();

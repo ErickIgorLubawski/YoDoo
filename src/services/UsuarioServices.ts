@@ -321,7 +321,7 @@ async findUsersByEquipamento(equipamentoId: string): Promise<UsuarioComAcesso[]>
   }
 }
 async findCentralUsers(deviceId: string) {
-  // 1) Encontra a central
+  // 1) Encontra a central (esta parte está correta)
   const central = await prisma.centrais.findUnique({
     where: { device_id: deviceId },
     select: {
@@ -337,9 +337,9 @@ async findCentralUsers(deviceId: string) {
     throw new Error(`Central com device_id="${deviceId}" não encontrada`);
   }
 
-  // 2) Busca os usuários com acessos.central === deviceId
+  // 2) Busca os usuários com a pipeline de agregação corrigida
   const raw = await prisma.$runCommandRaw({
-    aggregate: "usuarios_2_1",
+    aggregate: "usuarios_2_1", // O nome da sua view/collection
     pipeline: [
       {
         $match: {
@@ -347,10 +347,27 @@ async findCentralUsers(deviceId: string) {
         }
       },
       {
+        // =======================================================================
+        // CORREÇÃO APLICADA AQUI
+        // =======================================================================
         $project: {
           _id: 0,
           name: 1,
           idYD: 1,
+          // CORREÇÃO: Converte o campo de data para uma string no formato ISO 8601
+          createdAt: { 
+              $dateToString: { 
+                  format: "%Y-%m-%dT%H:%M:%S.%LZ", 
+                  date: "$createdAt" 
+              } 
+          },
+          updatedAt: { 
+              $dateToString: { 
+                  format: "%Y-%m-%dT%H:%M:%S.%LZ", 
+                  date: "$updatedAt" 
+              } 
+          },
+          // Esta parte que filtra os acessos para trazer apenas os da central relevante está ótima!
           acessos: {
             $filter: {
               input: "$acessos",
