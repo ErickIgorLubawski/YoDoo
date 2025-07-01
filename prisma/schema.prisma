@@ -75,4 +75,11 @@ model Logs {
   datetime      DateTime           @default(now())
   @@map("logs_2_1")
 }
-
+model administradores {
+  id            String              @id @default(auto()) @map("_id") @db.ObjectId
+  usuario       String
+  senha         String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  @@map("administradores_2_1")
+}

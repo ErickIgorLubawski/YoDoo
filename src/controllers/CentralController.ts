@@ -10,7 +10,6 @@ export class CentralController {
   async create(request: FastifyRequest, reply: FastifyReply) {
 
     const iprequest = request.ip
-
     const central = request.body as CentralDTO;
     if (!central.ipCentralMRD || !central.nomeEdificio || !central.device_id || !central.numero || !central.rua || !central.bairro) {
       return reply.status(400).send({ resp: "Campos obrigatórios: ipCentralMRD, nomeEdificio e numero" });
@@ -21,7 +20,7 @@ export class CentralController {
 
       const service = new CentralServices();
       const exists = await service.findByIP(central.device_id);
-
+console.log("exists", exists)
       if (exists) {
         return reply.status(409).send({ resp: "Já existe uma central com esse com esse id." });
       }
@@ -30,7 +29,7 @@ export class CentralController {
 
       const requestequipamento = new RequestEquipamento()
       const infocentral = await requestequipamento.searchInfoCentral(ipcentralmrd)
-
+      console.log(infocentral)
       const completeCenter: CentralinfoDTO = {
         // tudo que veio do front
         device_id: central.device_id,
@@ -79,7 +78,7 @@ export class CentralController {
         //     };
         //   })
         // );
-        
+
         await logExecution({ ip: iprequest, class: "CentralController", function: "list", process: "lista todas as centrais", description: "sucess", });;
         return reply.status(200).send({ task: "SUCESS.", resp: centrals });
       }

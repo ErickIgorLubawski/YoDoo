@@ -1,4 +1,4 @@
-import { UsuarioDTO, UsuarioIdCentralDTO } from './../DTOs/UsuarioDTO';
+import { UsuarioDTO, UsuarioIdCentralDTO, UsuarioAdm } from './../DTOs/UsuarioDTO';
 import { FastifyRequest, FastifyReply } from "fastify";
 import jwt from 'jsonwebtoken';
 import { UsuarioServices } from "../services/UsuarioServices";
@@ -11,39 +11,65 @@ interface UsuarioToken {
 }
 export class UsuarioController {
 
-  usuarioLocal: UsuarioToken = { UsuarioAdminToken: 'Youdoo_MRD', SenhaToken: '587469', };
-
-
   async login(request: FastifyRequest, reply: FastifyReply) {
-    const ipusuario = request.ip
-    console.log('Dados do front end: ', request.body)
-
-    const { usuario, senha } = request.body as { usuario: string; senha: string };
-    if (!usuario || !senha) {
-      return reply.status(400).send({ resp: 'Usuário e senha são obrigatórios.' });
+    const ipusuario = request.ip; // Captura o IP para logging
+    console.log('IP do usuário:', ipusuario);
+    // 1 - Valide o que está recebendo, com retorno
+    // Utilizando desestruturação e renomeando para clareza
+    const { usuario, senha } = request.body as UsuarioAdm; 
+    if (!usuario || typeof usuario !== 'string' || usuario.trim() === '') {
+      logExecution({ ip: ipusuario, class: "UsuarioController",function: "login",process: "Validação de entrada", description: "Campo 'name' é obrigatório e deve ser uma string não vazia.",});
+      return reply.status(400).send({ task: "ERROR", resp: 'O nome de usuário é obrigatório.' });
     }
-
+    if (!senha || typeof senha !== 'string' || senha.trim() === '') {
+      logExecution({
+        ip: ipusuario,class: "UsuarioController",function: "login",process: "Validação de entrada",description: "Campo 'senha' é obrigatório e deve ser uma string não vazia."});
+      return reply.status(400).send({ task: "ERROR", resp: 'A senha é obrigatória.' });
+    }
+    // Log da tentativa de login
+    logExecution({ip: ipusuario,class: "UsuarioController",function: "login",process: "Processo de Autenticação",description: `Tentativa de login para o usuário: ${usuario}`, });
     try {
-      if (usuario !== this.usuarioLocal.UsuarioAdminToken) {
-        return reply.status(401).send({ resp: 'Usuario invalido.' });
-      } else if (senha !== this.usuarioLocal.SenhaToken) {
-        return reply.status(401).send({ resp: 'Senha invalida.' });
+      const service = new UsuarioServices();
+      console.log('adm',usuario, senha)
+      // 2 - Pesquise o usuário e senha no banco & 3 - Faça a comparação de dados
+      // A lógica de busca e comparação é encapsulada no serviço.
+      // O serviço retorna o usuário autenticado (sem a senha) ou null se as credenciais forem inválidas.
+
+      const authenticatedUser = await service.validateAdmCredentials(usuario, senha);
+      console.log('autenticado', authenticatedUser)
+      if (!authenticatedUser) {
+        // Credenciais inválidas (usuário não encontrado ou senha incorreta)
+        logExecution({ ip: ipusuario, class: "UsuarioController",function: "login",process: "Processo de Autenticação",description: `Falha de autenticação para o usuário: ${usuario}. Credenciais inválidas.`,   });
+        return reply.status(401).send({ task: "ERROR", resp: 'Nome de usuário ou senha inválidos.' });
       }
 
+      // 4 - Se erro retorna se não gera e retorna token
+      // Verifica se a chave secreta JWT está definida
       const secret = process.env.JWT_SECRET as string;
-      const token = jwt.sign(this.usuarioLocal, secret, {
-        expiresIn: '1d',
-      });
+      if (!secret) {
+        logExecution({ip: ipusuario, class: "UsuarioController",function: "login", process: "Configuração JWT",description: "Variável de ambiente JWT_SECRET não definida.",});
+        return reply.status(500).send({ task: "ERROR", resp: 'Erro de configuração do servidor: chave secreta JWT não encontrada.' });
+      }
 
-      await logExecution({ ip: ipusuario, class: "UsuarioController", function: "list", process: "Solicitação de Token", description: "sucess", });;
-      return reply.status(200).send({ token })
+      // Gera o token JWT com informações relevantes (ID e nome do usuário, sem a senha)
+      const token = jwt.sign(
+        { id: authenticatedUser.id, usuario: authenticatedUser.usuario },
+        secret,
+        { expiresIn: '1d' } // Token expira em 1 dia
+      );
+
+      // 5 - Com retorno e status do fastify bem compreensível de entender.
+      logExecution({ip: ipusuario,class: "UsuarioController",function: "login",process: "Processo de Autenticação",   description: `Login bem-sucedido para o usuário: ${usuario}.`,});
+      return reply.status(200).send({ token: token });
 
     } catch (error: any) {
-      await logExecution({ ip: ipusuario, class: "UsuarioController", function: "list", process: "Solicitação de Token", description: "error", });;
-      return reply.status(500).send({ task: "ERROR", resp: 'erro no servidor' });
-
+      // Captura e loga qualquer erro inesperado durante o processo
+      logExecution({ip: ipusuario,class: "UsuarioController",function: "login",process: "Processo de Autenticação",description: `Erro inesperado durante o login para o usuário ${usuario}: ${error.message}`});
+      // Retorna um erro genérico para o cliente, evitando vazar informações internas
+      return reply.status(500).send({ task: "ERROR", resp: 'Erro interno do servidor durante o processo de login.' });
     }
   }
+
   async createBiometria(request: FastifyRequest, reply: FastifyReply) {
 
     const ipusuario = request.ip
@@ -274,6 +300,32 @@ export class UsuarioController {
 
     } catch (error: any) {
       await logExecution({ ip: ipusuario, class: "UsuarioController", function: "delete", process: "deletar usuario", description: "error", });;
+      return reply.status(400).send({ task: "ERROR", resp: 'erro ao deletar cliente' });
+    }
+  }
+  async createAdm(request: FastifyRequest, reply: FastifyReply) {
+    const ipusuario = request.ip
+
+    const admData = request.body as UsuarioAdm;
+    const { usuario, senha } = admData;
+    if (!usuario || !senha) {
+      return reply.status(400).send({ resp: "Usuario e senha obrigatorio" });
+    }
+    try {
+      const service = new UsuarioServices();  
+      const exists = await service.findnameAdm(usuario);
+      if (exists) {
+        return reply.status(400).send({ task: "ERROR", resp: 'Usuario ja cadastrado com esse name' });
+      }
+      const newUsuario = await service.createAdm(admData);
+      if (!newUsuario) {
+        return reply.status(400).send({ task: "ERROR", resp: 'erro ao cadastrar usuario' });
+      }
+      await logExecution({ ip: ipusuario, class: "UsuarioController", function: "createAdm", process: "criação de novo adm", description: "sucess", });;
+      return reply.status(200).send({ task: "SUCESS", resp: 'criação de novo adm ok', usuario: newUsuario });
+      
+    } catch (error: any) {
+      await logExecution({ ip: ipusuario, class: "UsuarioController", function: "createAdm", process: "criar usuario adm", description: "error", });;
       return reply.status(400).send({ task: "ERROR", resp: 'erro ao deletar cliente' });
     }
   }

@@ -46,6 +46,7 @@ export interface UsuarioResumo {
   name:       string;
   idYD:       string;
 }
-
-
-
+export interface UsuarioAdm {
+  usuario:       string;
+  senha:       string;
+}

@@ -31,7 +31,7 @@ const start = async () => {
             console.log('Variável de ambiente PORTA_CENTRAL não definida.')
            throw new Error('Variável de ambiente PORTA_CENTRAL não definida.');
         }
-        await app.listen({ port: +porta, host: '0.0.0.0' });
+        await app.listen({ port: +porta, host: '127.0.0.1' });
         console.log(`✅ Servidor iniciado na porta ${process.env.PORTA_SERVER}`);
         console.log(`✅ Porta central ${process.env.PORTA_CENTRAL}`)
 

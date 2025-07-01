@@ -1,5 +1,7 @@
 import { prisma } from '../config/db';
-import { UsuarioDTO, UsuarioIdCentralDTO,AcessoDoc, UsuarioComAcesso,CentralInfo,UsuarioResumo}  from "../DTOs/UsuarioDTO";
+import { UsuarioDTO, UsuarioIdCentralDTO,AcessoDoc, UsuarioComAcesso,UsuarioAdm,UsuarioResumo}  from "../DTOs/UsuarioDTO";
+import bcrypt from 'bcrypt';
+import { logExecution } from '../utils/logger';
 
 
 export class UsuarioServices {
@@ -225,7 +227,6 @@ async atualizarAcessoEspecifico(data: UsuarioIdCentralDTO) {
     
   }
 }
-//ATUALIZA ARRAY INTEIRO
 async  atualizarUsuarioEAcessos(data: UsuarioIdCentralDTO) {
   const usuario = await prisma.usuarios.findUnique({
     where: { idYD: data.idYD },
@@ -347,9 +348,6 @@ async findCentralUsers(deviceId: string) {
         }
       },
       {
-        // =======================================================================
-        // CORREÇÃO APLICADA AQUI
-        // =======================================================================
         $project: {
           _id: 0,
           name: 1,
@@ -385,4 +383,80 @@ async findCentralUsers(deviceId: string) {
 
   return usuarios;
 }
+async findnameAdm(usuario: string) {
+  return await prisma.administradores.findFirst({where: { usuario: usuario }});
 }
+ async createAdm(data: UsuarioAdm) { // Usando seu DTO UsuarioAdm
+    
+  // 1. Define o número de "rodadas de sal". 10 é um valor seguro e padrão.
+  const saltRounds = 10;
+
+  // 2. Cria o hash da senha que veio no corpo da requisição
+  const hashedPassword = await bcrypt.hash(data.senha, saltRounds);
+
+  // 3. Salva o usuário no banco, substituindo a senha original pelo hash
+  return await prisma.administradores.create({
+    data: {
+      ...data, // Copia todos os outros dados do DTO (como o usuário)
+      senha: hashedPassword, // Sobrescreve o campo 'senha' com o HASH
+    },
+  });
+}
+public async validateAdmCredentials(usuario: string, senha: string): Promise<{ id: string; usuario: string; } | null> {
+  const process = 'validateAdmCredentials';
+  const description = `Tentativa de validação para o usuário: ${usuario}`;
+
+  // Log 1: Confirma que a função foi chamada
+  console.log(`\n--- [DEBUG] INÍCIO DO PROCESSO: validateAdmCredentials para usuário "${usuario}" ---`);
+
+  try {
+    // Log 2: Antes de tocar no banco de dados
+    console.log('[DEBUG] Passo 1: Preparando para buscar usuário no Prisma.');
+    const user = await prisma.administradores.findFirst({
+      where: { usuario: usuario },
+    });
+
+    // Log 3: Mostra o que o Prisma retornou. ESSENCIAL!
+    console.log('[DEBUG] Passo 2: Resultado da busca no Prisma:', user);
+
+    if (!user) {
+      // Log 4: Se o usuário é nulo, este é o fim do caminho.
+      console.log('[DEBUG] FIM DA LINHA: Usuário não encontrado no banco. Retornando null.');
+      logExecution({ ip: 'N/A', class: "UsuarioServices", function: process, process: description, description: `Usuário "${usuario}" não encontrado.` });
+      return null;
+    }
+
+    // Log 5: Se o usuário foi encontrado, mostra os dados que serão comparados.
+    console.log(`[DEBUG] Passo 3: Usuário "${user.usuario}" encontrado. Preparando para comparar a senha.`);
+    console.log(`     [DEBUG] Senha recebida na requisição: "${senha}"`);
+    console.log(`     [DEBUG] Hash armazenado no banco: "${user.senha}"`);
+
+    const isMatch = await bcrypt.compare(senha, user.senha);
+
+    // Log 6: Mostra o resultado da comparação do bcrypt. ESSENCIAL!
+    console.log('[DEBUG] Passo 4: Resultado do bcrypt.compare:', isMatch);
+
+    if (!isMatch) {
+      // Log 7: Se a senha não bate, este é o fim do caminho.
+      console.log('[DEBUG] FIM DA LINHA: Senha não corresponde (isMatch = false). Retornando null.');
+      logExecution({ ip: 'N/A', class: "UsuarioServices", function: process, process: description, description: `Senha inválida para o usuário "${usuario}".` });
+      return null;
+    }
+    
+    // Log 8: Se tudo deu certo.
+    console.log('[DEBUG] SUCESSO: Credenciais válidas. Retornando dados do usuário.');
+    logExecution({ ip: 'N/A', class: "UsuarioServices", function: process, process: description, description: `Usuário "${usuario}" autenticado com sucesso.` });
+    return {
+      id: user.id,
+      usuario: user.usuario,
+    };
+
+  } catch (error: any) {
+    // Log 9: Se algo quebrar de forma inesperada.
+    console.error('[DEBUG] ERRO FATAL: Ocorreu uma exceção no bloco try/catch.', error);
+    logExecution({ ip: 'N/A', class: "UsuarioServices", function: process, process: description, description: `ERRO INESPERADO: ${error.message}` });
+    throw new Error(`Erro interno no processo de validação: ${error.message}`);
+  }
+
+
+}}
