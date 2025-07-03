@@ -28,11 +28,14 @@ export class EquipamentoController {
       const servicecentral = new CentralServices();
       const id = await servicecentral.searchIdCentral(ipcentralmrd);
       const central_id = id?.device_id.toString()
+      console.log('central_id:', id)
+      console.log('central_id:', central_id)
 
+    
       //Equipamentos do banco
       const serviceequipamento = new EquipamentoServices();
       const equipamentosdb = await serviceequipamento.list();
-      //console.log('equipamentos banco: ', equipamentosdb)
+      console.log('equipamentos banco: ', equipamentosdb)
 
       const idsBanco = new Set(equipamentosdb.map(e => e.device_id));
       // Filtrar apenas os equipamentos da central que NÃO estão no banco
@@ -57,7 +60,7 @@ export class EquipamentoController {
         });
       }
       await logExecution({ ip: iprequest, class: "EquipamentoController", function: "list", process: "list equipamento", description: "sucess", });;
-      return reply.status(200).send({ task: "SUCESS.", resp: 'novos equipamentos criado no banco',listaEquipamentoscentral });
+      return reply.status(200).send({ task: "SUCESS.", resp: 'novos equipamentos criado no banco',novosEquipamentos });
     } catch (err: any) {
       await logExecution({ ip: iprequest, class: "EquipamentoController", function: "create", process: "cria equipamento", description: "error", });;
       return reply.status(500).send({ resp: "ERROR" });

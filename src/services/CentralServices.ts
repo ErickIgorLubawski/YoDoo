@@ -48,10 +48,10 @@ export class CentralServices {
       where: { device_id: id }
     });
   }
-  async searchIdCentral(ipCentralMRD: any) {
+  async searchIdCentral(ipCentralMRD: string) {
     const central = await prisma.centrais.findFirst({
       where: {
-        //ipCentralMRD: ipCentralMRD,
+        ip_VPN: ipCentralMRD,
       },
       select: {
         device_id: true,

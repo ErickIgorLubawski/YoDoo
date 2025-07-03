@@ -8,7 +8,6 @@ export async function usuarioRoutes(fastify: FastifyInstance, options: FastifyPl
 
   // 🔓 Rotas públicas
   fastify.post('/usuarios/token', controller.login.bind(controller));
-  fastify.post("/administrador", controller.createAdm.bind(controller));
   // 🔐 Grupo de rotas protegidas com middleware
   fastify.register(async (privateRoutes) => {
     privateRoutes.addHook("onRequest", verifyToken);
@@ -18,6 +17,7 @@ export async function usuarioRoutes(fastify: FastifyInstance, options: FastifyPl
     privateRoutes.put("/usuarios", controller.update.bind(controller));
     privateRoutes.delete("/usuarios", controller.delete.bind(controller));
     
+    privateRoutes.post("/administrador", controller.createAdm.bind(controller));
     privateRoutes.get("/usuarioslocal", controller.listuserslocais.bind(controller));
     privateRoutes.get("/usuarios/central", controller.listusersequipamento.bind(controller));
     

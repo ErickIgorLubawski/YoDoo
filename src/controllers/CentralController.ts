@@ -20,7 +20,7 @@ export class CentralController {
 
       const service = new CentralServices();
       const exists = await service.findByIP(central.device_id);
-console.log("exists", exists)
+      console.log("exists", exists)
       if (exists) {
         return reply.status(409).send({ resp: "Já existe uma central com esse com esse id." });
       }

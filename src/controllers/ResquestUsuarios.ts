@@ -19,11 +19,7 @@ export class RequestCentral {
   async buildPayloads(data: UsuarioDTO, method: MetodoHttp) {
 
     const equipamentoSvc = new EquipamentoServices();
-    console.log('data', data)
     const equipamentos = await equipamentoSvc.getIpsAndCentralByDeviceIds(data.acessos);
-
-    console.log('equipamentos', equipamentos)
-
 
     if (equipamentos.length === 0) {
       throw new Error("Nenhum equipamento encontrado");
@@ -31,9 +27,9 @@ export class RequestCentral {
 
 
     const centralIds = Array.from(new Set(equipamentos.map(e => e.central_id)));
+    console.log('centralIds', centralIds)
     const centralMRD = new CentralServices();
     const centraisIps = await centralMRD.getByDeviceIds(centralIds);
-
     console.log('centraisIps', centraisIps)
 
     const centralIpMap: { [centralId: string]: string } = {};
@@ -62,6 +58,9 @@ export class RequestCentral {
       const baseUrl = `http://${centralIp}`;   // monta URL dinâmica
       
       console.log('centraisIps', centraisIps)
+      console.log('equipamentoIps',equipamentoIps)
+      //4408801109357360 - 192.168.0.23
+      //4408801109345045 - 192.168.0.129
 
       if (method === "POST") {
         payloads.push({

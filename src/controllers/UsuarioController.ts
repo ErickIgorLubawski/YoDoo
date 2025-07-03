@@ -82,7 +82,7 @@ export class UsuarioController {
       const serviceCentral = new RequestCentral();
       const centralResult = await serviceCentral.processarUsuarioCentral(UsuarioDTO, ipusuario, "POST");
       const task = centralResult.result.tasks.toString()
-      // console.log('resposta da central: ',centralResult)
+       console.log('resposta da central: ',centralResult)
       // console.log('task da central em request central',task)
 
 
