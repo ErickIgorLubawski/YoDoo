@@ -19,15 +19,22 @@ export class RequestCentral {
   async buildPayloads(data: UsuarioDTO, method: MetodoHttp) {
 
     const equipamentoSvc = new EquipamentoServices();
+    console.log('data', data)
     const equipamentos = await equipamentoSvc.getIpsAndCentralByDeviceIds(data.acessos);
+
+    console.log('equipamentos', equipamentos)
+
 
     if (equipamentos.length === 0) {
       throw new Error("Nenhum equipamento encontrado");
     }
 
+
     const centralIds = Array.from(new Set(equipamentos.map(e => e.central_id)));
     const centralMRD = new CentralServices();
     const centraisIps = await centralMRD.getByDeviceIds(centralIds);
+
+    console.log('centraisIps', centraisIps)
 
     const centralIpMap: { [centralId: string]: string } = {};
     centraisIps.forEach(c => {
@@ -53,6 +60,8 @@ export class RequestCentral {
       // Produção        Monta URL dinâmica
       const centralIp = centralIpMap[centralId]; // IP real da central
       const baseUrl = `http://${centralIp}`;   // monta URL dinâmica
+      
+      console.log('centraisIps', centraisIps)
 
       if (method === "POST") {
         payloads.push({
@@ -103,13 +112,19 @@ export class RequestCentral {
 
       }
     }
+console.log('payloads', payloads)
+console.log('payloads', centralIds)
+
+
     return { payloads, centralIds };
   }
   private async sendAll(payloads: Array<Payload<any>>, iprequest: string) {
 
+  
+    console.log('payload',payloads)
+
     const tasks: any[] = [];
     let user_idDevice = 0;
-    console.log('payload',payloads)
     for (const request of payloads) {
       try {
         const resp = await axios({
