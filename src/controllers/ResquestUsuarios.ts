@@ -21,9 +21,9 @@ export class RequestCentral {
     const equipamentoSvc = new EquipamentoServices();
     const equipamentos = await equipamentoSvc.getIpsAndCentralByDeviceIds(data.acessos);
 
-    if (equipamentos.length === 0) {
-      throw new Error("Nenhum equipamento encontrado");
-    }
+    // if (equipamentos.length === 0) {
+    //   throw new Error("Nenhum equipamento encontrado");
+    // }
 
 
     const centralIds = Array.from(new Set(equipamentos.map(e => e.central_id)));
@@ -125,6 +125,9 @@ console.log('payloads', centralIds)
     const tasks: any[] = [];
     let user_idDevice = 0;
     for (const request of payloads) {
+
+
+
       try {
         const resp = await axios({
           url: request.endpoint,
@@ -132,8 +135,11 @@ console.log('payloads', centralIds)
           data: request.body,
         });
 
-        console.log('resp', resp.data)
+        const responseData = resp.data;
+        console.log('resp Central', responseData);
 
+        tasks.push(responseData);
+        console.log(responseData)
         const data = resp.data;
         if (data.task) {
           tasks.push(data.task);
@@ -145,7 +151,7 @@ console.log('payloads', centralIds)
         await logExecution({ ip: iprequest, class: "RequestCentral", function: "sendAll", process: `${request.method} -> ${request.endpoint}`, description: `Status ${resp.status}`, });
       } catch (err: any) {
         await logExecution({ ip: iprequest, class: "RequestCentral", function: "sendAll", process: `Erro ${request.method} -> ${request.endpoint}`, description: err.message, });
-        //return { tasks, user_idDevice };
+        return { tasks, user_idDevice };
       }
     }
     return { tasks, user_idDevice };

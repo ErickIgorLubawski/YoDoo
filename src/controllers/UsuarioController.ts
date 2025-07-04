@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { UsuarioServices } from "../services/UsuarioServices";
 import { logExecution } from "../utils/logger";
 import { RequestCentral } from "./ResquestUsuarios";
+import { EquipamentoServices } from '../services/EquipamentoServices';
 
 interface UsuarioToken {
   UsuarioAdminToken: string;
@@ -80,11 +81,40 @@ export class UsuarioController {
     }
     try {
       const serviceCentral = new RequestCentral();
-      const centralResult = await serviceCentral.processarUsuarioCentral(UsuarioDTO, ipusuario, "POST");
-      const task = centralResult.result.tasks.toString()
-       console.log('resposta da central: ',centralResult)
-      // console.log('task da central em request central',task)
 
+      const equipamentoServices = new EquipamentoServices();
+      // Verifica se o equipamento existe
+      const equipamentos = await equipamentoServices.getIpsAndCentralByDeviceIds(UsuarioDTO.acessos);
+      if (!equipamentos || equipamentos.length === 0) {
+        return reply.status(404).send({ task: "ERROR", resp: 'Equipamento não encontrado' });
+      }
+
+      const centralResult = await serviceCentral.processarUsuarioCentral(UsuarioDTO, ipusuario, "POST");
+      // --- A LÓGICA MAIS SIMPLES PARA LER O RESULTADO ---
+      
+      // 1. Criamos uma variável para controlar se o usuário já existe.
+      let usuarioJaCadastrado = false;
+      
+      // 2. Usamos um loop 'for' para verificar cada item retornado pela central.
+      for (const item of centralResult.result.tasks) {
+        // Verificamos se o item é o objeto de erro que procuramos.
+        // A verificação 'item && item.ERROR' garante que o código não quebre se o item não for um objeto.
+        if (item && item.ERROR && item.ERROR[0]?.status === 'cliente ja cadastrado') {
+          usuarioJaCadastrado = true; // Se encontrarmos, mudamos a variável para true...
+          break; // ...e saímos do loop, pois já temos a resposta.
+        }
+      }
+
+      // 3. Agora, verificamos o valor da nossa variável.
+      if (usuarioJaCadastrado) {
+        return reply.status(409).send({  task: "ERROR", resp: 'Usuário já cadastrado no equipamento.' });
+      }
+      if (centralResult.result.tasks.includes('ERROR')) {
+          return reply.status(500).send({ task: "ERROR", resp: 'Ocorreu um erro na comunicação com o equipamento.' });
+      }
+
+      // Para outros erros, podemos usar a sua lógica original com uma pequena adaptação.
+      // Verificamos se a string 'ERROR' aparece no array.
 
       const user_idEquipamento = centralResult.result.user_idDevice?.toString()
       const idcentral = centralResult.idacessos
@@ -92,13 +122,6 @@ export class UsuarioController {
       // console.log('status resposta da central: ',responseCentral)
       // console.log('ID do usuario na central: ',user_idEquipamento)
       // console.log('id da central: ',idcentral)
-
-      if (task.includes("PARSE")) {
-        return reply.status(200).send({ task: "PARSE", resp: 'usuario ja cadastrado no equipamento' });
-      }
-      if (task.includes("ERROR")) {
-        return reply.status(500).send({ task: "ERROR", resp: 'equipamento não encontrada' });
-      }
       const UsuarioIdCentral: UsuarioIdCentralDTO = {
         ...UsuarioDTO,
         user_idEquipamento,
