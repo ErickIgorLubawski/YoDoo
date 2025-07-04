@@ -253,7 +253,7 @@ export class UsuarioController {
     const ipusuario = request.ip
     const Usuario = request.body as UsuarioDTO;
 
-    if (!Usuario.name || !Usuario.idYD || !Usuario.password || !Usuario.begin_time || !Usuario.end_time || !Usuario.acessos) {
+    if (!Usuario.name || !Usuario.idYD || !Usuario.acessos) {
       return reply.status(400).send({ task: "ERROR", resp: 'preenhcer todos os campos' });
     }
     try {
