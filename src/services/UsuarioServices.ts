@@ -3,6 +3,11 @@ import { UsuarioDTO, UsuarioIdCentralDTO,AcessoDoc, UsuarioComAcesso,UsuarioAdm,
 import bcrypt from 'bcrypt';
 import { logExecution } from '../utils/logger';
 
+export type PayloadAtualizacaoUsuario = {
+  name?: string;
+  password?: string;
+  acessos?: AcessoDoc[]; // Usando sua interface AcessoDoc
+};
 
 export class UsuarioServices {
 async createusuariobiometria(UsuarioDTO: UsuarioDTO) {
@@ -20,6 +25,7 @@ async list() {
       acessos: true,
       createdAt: true,
       updatedAt: true,
+      base64: true, // Inclui base64 para retornar a imagem
       // retira base64,user_idEquipamento e id banco omitindo-os do select
     }
   });
@@ -173,59 +179,24 @@ async  atualizarAcessoEspecificoold(data: UsuarioIdCentralDTO) {
 
   return usuarioAtualizado;
 }
-async atualizarAcessoEspecifico(data: UsuarioIdCentralDTO) {
-  // 1) Busca o usuário pelo idYD
-  const usuario = await prisma.usuarios.findUnique({
-    where: { idYD: data.idYD },
+async buscarPorIdYD(idYD: string) {
+  return prisma.usuarios.findUnique({
+    where: { idYD },
   });
-  if (!usuario) {
-    throw new Error("Usuário não encontrado");
-  }
+}
 
-  // 2) Monta o objeto de update, adicionando só o que vier
-  const atualizacoes: any = {};
-  if (data.name && data.name !== usuario.name) {
-    atualizacoes.name = data.name;
-  }
-  if (data.password && data.password !== usuario.password) {
-    atualizacoes.password = data.password;
-  }
-
-  // 3) Atualiza só o acesso desejado
-  const equipamentoAlvo = data.acessos[0]; // o equipamento que veio no body
-  // transforma o JSON em array tipado
-  const acessosOriginais = usuario.acessos as unknown as AcessoDoc[];
-  const acessosAtualizados = acessosOriginais.map(acesso => {
-    if (acesso.equipamento === equipamentoAlvo) {
-      return {
-        ...acesso,
-        // só sobrescreve estes campos
-        begin_time: data.begin_time ?? acesso.begin_time,
-        end_time:   data.end_time   ?? acesso.end_time,
-        central:    data.idcentral  ?? acesso.central,
-      };
-    }
-    return acesso;
+/**
+ * Atualiza os dados de um usuário com base no seu idYD.
+ * Recebe um payload com os dados a serem alterados.
+ */
+async atualizarUsuario(idYD: string, dados: PayloadAtualizacaoUsuario) {
+  return prisma.usuarios.update({
+    where: { idYD },
+    data: {
+      ...dados,
+      acessos: dados.acessos ? JSON.parse(JSON.stringify(dados.acessos)) : undefined,
+    },
   });
-
-  // 4) adiciona essa alteração ao objeto de update
-  atualizacoes.acessos = acessosAtualizados;
-
-  // 5) Grava tudo de volta
-  const usuarioAtualizado = await prisma.usuarios.update({
-    where: { idYD: data.idYD },
-    data: atualizacoes,
-  });
-  return {
-    id: usuarioAtualizado.id,
-    name: usuarioAtualizado.name,
-    idYD: usuarioAtualizado.idYD,
-    password: usuarioAtualizado.password,
-    acessos: usuarioAtualizado.acessos,
-    createdAt: usuarioAtualizado.createdAt,
-    updatedAt: usuarioAtualizado.updatedAt,
-    
-  }
 }
 async  atualizarUsuarioEAcessos(data: UsuarioIdCentralDTO) {
   const usuario = await prisma.usuarios.findUnique({
