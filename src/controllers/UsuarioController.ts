@@ -1,7 +1,7 @@
-import { UsuarioDTO, UsuarioIdCentralDTO, UsuarioAdm, AcessoDoc } from './../DTOs/UsuarioDTO';
+import { UsuarioDTO, UsuarioIdCentralDTO, UsuarioAdm } from './../DTOs/UsuarioDTO';
 import { FastifyRequest, FastifyReply } from "fastify";
 import jwt from 'jsonwebtoken';
-import { UsuarioServices,PayloadAtualizacaoUsuario } from "../services/UsuarioServices";
+import { UsuarioServices } from "../services/UsuarioServices";
 import { logExecution } from "../utils/logger";
 import { RequestCentral } from "./ResquestUsuarios";
 import { EquipamentoServices } from '../services/EquipamentoServices';
@@ -249,136 +249,40 @@ export class UsuarioController {
     }
   }
   async update(request: FastifyRequest, reply: FastifyReply) {
-    const ipusuario = request.ip;
-    const usuarioData = request.body as UsuarioDTO;
 
-    console.log(`[DEBUG] Iniciando processo de atualização para idYD: ${usuarioData.idYD}`);
-    console.log("[DEBUG] Dados recebidos:", usuarioData);
+    const ipusuario = request.ip
+    const Usuario = request.body as UsuarioDTO;
 
-    if (!usuarioData.idYD || !usuarioData.acessos || usuarioData.acessos.length === 0) {
-      return reply.status(400).send({ task: "ERROR", resp: 'Os campos idYD e acessos são obrigatórios.' });
+    if (!Usuario.idYD || !Usuario.acessos) {
+      return reply.status(400).send({ task: "ERROR", resp: 'preenhcer todos os campos' });
     }
-
-    const usuarioService = new UsuarioServices();
-    const equipamentoService = new EquipamentoServices();
-    const requestCentral = new RequestCentral();
-
     try {
-      // 1. BUSCAR DADOS DO USUÁRIO (Já temos o 'usuarioNoBanco' aqui)
-      const usuarioNoBanco = await usuarioService.buscarPorIdYD(usuarioData.idYD);
-      console.log("[DEBUG] Usuário encontrado. Nome:", usuarioNoBanco);
-    
-      if (!usuarioNoBanco) {
-        return reply.status(404).send({ task: "ERROR", resp: "Usuário não encontrado." });
-      }
-      console.log("[DEBUG] Usuário encontrado. Nome:", usuarioNoBanco.name);
+      const serviceCentral = new RequestCentral();
+      const centralResult = await serviceCentral.processarUsuarioCentral(Usuario, ipusuario, "PUT");
 
-      // 2. LÓGICA DE NEGÓCIO: SEPARAR ACESSOS (continua igual)
-      const acessosAtuais = (usuarioNoBanco.acessos as unknown as AcessoDoc[]) || [];
-      const equipamentosAtuaisSet = new Set(acessosAtuais.map(a => a.equipamento));
-      const equipamentosParaCriar: string[] = [];
-      const equipamentosParaAtualizar: string[] = [];
+      console.log('1 usuario no equipamento',centralResult)
 
-      for (const equipamentoId of usuarioData.acessos) {
-        if (equipamentosAtuaisSet.has(equipamentoId)) {
-          equipamentosParaAtualizar.push(equipamentoId);
-        } else {
-          equipamentosParaCriar.push(equipamentoId);
-        }
-      }
-
-      console.log("[DEBUG] Acessos a criar:", equipamentosParaCriar);
-      console.log("[DEBUG] Acessos a atualizar:", equipamentosParaAtualizar);
-
-      let resultadoCriacao: any = null;
-      let mapaIpEquipamento: { [ip: string]: string } = {};
-
-      // 3. ORQUESTRAR CHAMADA EXTERNA (CRIAR)
-      if (equipamentosParaCriar.length > 0) {
-        const equipamentosInfo = await equipamentoService.getIpsAndCentralByDeviceIds(equipamentosParaCriar);
-        equipamentosInfo.forEach(eq => { mapaIpEquipamento[eq.ip] = eq.central_id; });
-        
-        // ======================= A CORREÇÃO ESTÁ AQUI =======================
-        // Montamos o DTO para a criação usando os dados do BANCO DE DADOS
-        // para garantir que `name` e `password` estejam sempre presentes.
-        const dtoCriacao: UsuarioDTO = {
-          ...usuarioData, // Pega begin_time/end_time da requisição atual
-          name: usuarioNoBanco.name, // Usa o nome do banco
-          password: usuarioNoBanco.password as string, // Usa a senha do banco
-          base64: usuarioNoBanco.base64 as string, // Usa a biometria do banco
-          acessos: equipamentosParaCriar, // Define a lista de acessos a serem criados
-        };
-        console.log("[DEBUG] Payload para CRIAR na Central:", dtoCriacao);
-        // =====================================================================
-
-        resultadoCriacao = await requestCentral.processarUsuarioCentral(dtoCriacao, ipusuario, "POST");
-        if (resultadoCriacao.result.tasks.toString().includes("ERROR")) {
-          throw new Error(`Erro na Central ao criar acessos: ${resultadoCriacao.result.tasks}`);
-        }
-      }
-
-      // 4. ORQUESTRAR CHAMADA EXTERNA (ATUALIZAR)
-      if (equipamentosParaAtualizar.length > 0) {
-        // Por consistência, faremos o mesmo para a atualização.
-        const dtoAtualizacao: UsuarioDTO = {
-          ...usuarioData,
-          name: usuarioNoBanco.name,
-          password: usuarioNoBanco.password as string,
-          base64: usuarioNoBanco.base64 as string,
-          acessos: equipamentosParaAtualizar,
-        };
-        console.log("[DEBUG] Payload para ATUALIZAR na Central:", dtoAtualizacao);
-        await requestCentral.processarUsuarioCentral(dtoAtualizacao, ipusuario, "PUT");
-      }
-
-      // ... (Restante da lógica para montar o payload e salvar no banco continua igual)
-      // 5. LÓGICA DE NEGÓCIO: MONTAR PAYLOAD FINAL
-      const acessosAtualizados = acessosAtuais.map(acesso => {
-        if (equipamentosParaAtualizar.includes(acesso.equipamento)) {
-          return { ...acesso, begin_time: usuarioData.begin_time, end_time: usuarioData.end_time };
-        }
-        return acesso;
-      });
-
-      const novosAcessos: AcessoDoc[] = [];
-      if (resultadoCriacao && resultadoCriacao.result.tasks.length > 0) {
-        const respostaDaCentral = resultadoCriacao.result.tasks[0]?.resp;
-        if (respostaDaCentral && Array.isArray(respostaDaCentral)) {
-          respostaDaCentral.forEach((respItem: any) => {
-            if (respItem.device_ip && respItem.user_idDevice) {
-              const equipamentoId = mapaIpEquipamento[respItem.device_ip];
-              if (equipamentoId) {
-                novosAcessos.push({
-                  central: resultadoCriacao.idacessos[0],
-                  equipamento: equipamentoId,
-                  user_idEquipamento: respItem.user_idDevice.toString(),
-                  begin_time: usuarioData.begin_time,
-                  end_time: usuarioData.end_time,
-                });
-              }
-            }
-          });
-        }
-      }
-
-      const dadosParaAtualizar: PayloadAtualizacaoUsuario = {
-        acessos: [...acessosAtualizados, ...novosAcessos]
+     // const user_idEquipamento = centralResult.result.user_idDevice?.toString()
+      const task = centralResult.result.tasks.toString()
+      const idcentral = centralResult.idacessos
+      const UsuarioIdCentral: UsuarioIdCentralDTO = {
+        ...Usuario,
+        idcentral: idcentral.join(','),
       };
-      // Atualiza nome/senha no NOSSO banco apenas se vieram na requisição
-      if (usuarioData.name) dadosParaAtualizar.name = usuarioData.name;
-      if (usuarioData.password) dadosParaAtualizar.password = usuarioData.password;
-      
-      console.log("[DEBUG] Payload final para o banco:", JSON.stringify(dadosParaAtualizar, null, 2));
 
-      // 6. SALVAR DADOS
-      const usuarioFinal = await usuarioService.atualizarUsuario(usuarioData.idYD, dadosParaAtualizar);
-      
-      return reply.status(200).send({ task: "SUCESS", resp: usuarioFinal });
+      console.log('payload', UsuarioIdCentral)
 
+      if (task.includes("ERROR")) {
+        return reply.status(500).send({ task: "ERROR", resp: 'equipamento não encontrada' });
+      }
+      const service = new UsuarioServices();
+      const usuarios = await service.atualizarAcessoEspecifico(UsuarioIdCentral);
+      console.log('usuarios no equipamento', usuarios)
+      await logExecution({ ip: ipusuario, class: "UsuarioController", function: "update", process: "atualizar usuario", description: "sucess", });;
+      return reply.status(200).send({ task: "SUCESS.", resp: UsuarioIdCentral });
     } catch (error: any) {
-      console.error(`[ERROR] Falha no processo para idYD ${usuarioData.idYD}:`, error.message);
-      await logExecution({ ip: ipusuario, class: "UsuarioController", function: "update", process: "atualizar/criar acessos", description: `Erro: ${error.message}` });
-      return reply.status(500).send({ task: "ERROR", resp: error.message });
+      await logExecution({ ip: ipusuario, class: "UsuarioController", function: "update", process: "atualizar usuario", description: "error", });;
+      return reply.status(500).send({ task: "ERROR", resp: 'cliente ou acesso não encontrado' });
     }
   }
   async delete(request: FastifyRequest, reply: FastifyReply) {
