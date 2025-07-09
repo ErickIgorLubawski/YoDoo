@@ -12,6 +12,8 @@ export class RequestCentral {
     const payloads = await this.buildPayloads(data, method);
     const result = await this.sendAll(payloads.payloads, iprequest);
 
+   
+
     const idacessos = payloads.centralIds
     return { result, idacessos }
   }
@@ -135,8 +137,10 @@ console.log('payloads', centralIds)
           data: request.body,
         });
 
+
+
         const responseData = resp.data;
-        console.log('resp Central', responseData);
+        console.log('resp Central ', responseData);
 
         tasks.push(responseData);
         console.log(responseData)

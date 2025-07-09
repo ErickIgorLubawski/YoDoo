@@ -7,6 +7,7 @@ export interface UsuarioDTO {
   bio?:             string
   base64?:          string
   acessos:          string[]
+  debug?:            string,
   
 }
 export interface UsuarioIdCentralDTO extends UsuarioDTO{
