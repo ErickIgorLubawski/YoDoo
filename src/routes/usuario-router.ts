@@ -15,7 +15,7 @@ export async function usuarioRoutes(fastify: FastifyInstance, options: FastifyPl
     privateRoutes.post("/usuarios/biometria", controller.createBiometria.bind(controller));
     privateRoutes.get("/usuarios", controller.list.bind(controller));
     privateRoutes.put("/usuarios", controller.update.bind(controller));
-    privateRoutes.delete("/usuarios", controller.delete.bind(controller));
+    privateRoutes.delete("/usuarios_2_1", controller.delete.bind(controller));
     
     privateRoutes.post("/administrador", controller.createAdm.bind(controller));
     privateRoutes.get("/usuarioslocal", controller.listuserslocais.bind(controller));

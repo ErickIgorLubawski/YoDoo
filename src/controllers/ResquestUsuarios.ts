@@ -104,7 +104,7 @@ export class RequestCentral {
       } if (method === "DELETE") {
         payloads.push({
           method,
-          endpoint: `${baseUrl}/del_cl`,
+          endpoint: `${baseUrl}/del_cl_2_1`,
           body: {
             idYD: data.idYD,
             acessos: equipamentoIps,

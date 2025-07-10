@@ -296,7 +296,7 @@ export class UsuarioController {
     try {
       const payload = {
         idYD: idYD,
-        debug: 'debug',// Use the provided debug value or default to false
+        //debug: 'debug',// Use the provided debug value or default to false
         acessos: acessos,
         name: "", // Provide a default or fetch the actual value
         password: "", // Provide a default or fetch the actual value
