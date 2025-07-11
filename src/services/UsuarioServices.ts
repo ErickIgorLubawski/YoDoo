@@ -221,7 +221,7 @@ async atualizarAcessoEspecifico(data: UsuarioIdCentralDTO) {
   if (data.password && data.password !== usuario.password) {
     atualizacoes.password = data.password;
   }
-  if (data.base64) {
+  if (data.base64 && data.base64 !== usuario.base64) {
     atualizacoes.base64 = data.base64;
   }
 
