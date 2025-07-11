@@ -90,6 +90,8 @@ export class UsuarioController {
       }
 
       const centralResult = await serviceCentral.processarUsuarioCentral(UsuarioDTO, ipusuario, "POST");
+      const accessResults = centralResult.result.user_idDevice; 
+      console.log('acessos do id equipamento usuario:', accessResults)
       // --- A LÓGICA MAIS SIMPLES PARA LER O RESULTADO ---
       
       // 1. Criamos uma variável para controlar se o usuário já existe.
@@ -124,7 +126,7 @@ export class UsuarioController {
       // console.log('id da central: ',idcentral)
       const UsuarioIdCentral: UsuarioIdCentralDTO = {
         ...UsuarioDTO,
-        user_idEquipamento,
+        user_idEquipamento, 
         idcentral: idcentral.join(','),
       };
 
@@ -296,7 +298,6 @@ export class UsuarioController {
     try {
       const payload = {
         idYD: idYD,
-        //debug: 'debug',// Use the provided debug value or default to false
         acessos: acessos,
         name: "", // Provide a default or fetch the actual value
         password: "", // Provide a default or fetch the actual value
@@ -305,7 +306,7 @@ export class UsuarioController {
       };
       const serviceCentral = new RequestCentral();
       const centralResult = await serviceCentral.processarUsuarioCentral(payload, ipusuario, "DELETE");
-      console.log('centralResult', centralResult)
+
       const responseCentral = centralResult.result.tasks.toString()
 
       if (responseCentral === "ERROR") {

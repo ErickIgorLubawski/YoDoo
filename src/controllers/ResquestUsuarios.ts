@@ -4,6 +4,7 @@ import { logExecution } from "../utils/logger";
 import { EquipamentoServices } from "../services/EquipamentoServices";
 import { CentralServices } from "../services/CentralServices";
 import { Payload, MetodoHttp } from "../DTOs/RequestCentralDTO";
+import { UsuarioServices } from "../services/UsuarioServices";
 
 export class RequestCentral {
 
@@ -12,17 +13,22 @@ export class RequestCentral {
     const payloads = await this.buildPayloads(data, method);
     const result = await this.sendAll(payloads.payloads, iprequest);
 
-   
-
     const idacessos = payloads.centralIds
     return { result, idacessos }
   }
 
   async buildPayloads(data: UsuarioDTO, method: MetodoHttp) {
 
-    const equipamentoSvc = new EquipamentoServices();
-    const equipamentos = await equipamentoSvc.getIpsAndCentralByDeviceIds(data.acessos);
+    if (method === "DELETE") {
+      const usuarioSvc = new UsuarioServices();
+      // Chama a nova função para obter a lista de IDs de equipamento dinamicamente.
+      data.acessos = await usuarioSvc.getEquipamentoIdsByUserIdYd(data.idYD);
+    }
 
+    // O restante do fluxo permanece IDÊNTICO, pois ele agora receberá os dados no formato correto.
+    const equipamentoSvc = new EquipamentoServices();
+    const equipamentos = await equipamentoSvc.getIpsAndCentralByDeviceIds(data.acessos as any);
+    
     // if (equipamentos.length === 0) {
     //   throw new Error("Nenhum equipamento encontrado");
     // }
@@ -97,6 +103,7 @@ export class RequestCentral {
             idYD: data.idYD,
             begin_time: data.begin_time,
             end_time: data.end_time,
+            base64: data.base64,
             acessos: equipamentoIps,
             password: data.password
           }
@@ -125,7 +132,7 @@ console.log('payloads', centralIds)
     console.log('payload',payloads)
 
     const tasks: any[] = [];
-    let user_idDevice = 0;
+    let user_idDevice: any[] = []; 
     for (const request of payloads) {
 
 
@@ -150,8 +157,9 @@ console.log('payloads', centralIds)
           tasks.toString()
         }
         if (request.method === 'POST' || request.method === 'PUT') {
-          user_idDevice = resp.data.resp.acessos[0].user_idDevice;
+          user_idDevice = responseData.resp.acessos;
         }
+        console.log('✅ [RequestCentral] Detalhes de acesso capturados da central:', JSON.stringify(user_idDevice, null, 2));
         await logExecution({ ip: iprequest, class: "RequestCentral", function: "sendAll", process: `${request.method} -> ${request.endpoint}`, description: `Status ${resp.status}`, });
       } catch (err: any) {
         await logExecution({ ip: iprequest, class: "RequestCentral", function: "sendAll", process: `Erro ${request.method} -> ${request.endpoint}`, description: err.message, });

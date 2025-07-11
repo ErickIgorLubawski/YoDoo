@@ -9,8 +9,10 @@ async createusuariobiometria(UsuarioDTO: UsuarioDTO) {
   return await prisma.usuarios.create({ data: UsuarioDTO });
 }
 async findByIdYD(idYD: string) {
+  console.log('ID: ', idYD)
   return await prisma.usuarios.findFirst({where: { idYD: idYD }});
 }
+
 async list() {
   return await prisma.usuarios.findMany({
     select: {
@@ -25,7 +27,35 @@ async list() {
     }
   });
 }
+
+async getEquipamentoIdsByUserIdYd(idYD: string) {
+ try {
+   // 1. Busca o usuário, mas seleciona APENAS o campo 'acessos' para otimizar a consulta.
+   const usuario = await prisma.usuarios.findUnique({
+     where: { idYD: idYD },
+     select: {
+       acessos: true,
+     },
+   });
+
+   // 2. Se o usuário não for encontrado ou não tiver acessos, retorna um array vazio.
+   if (!usuario || !usuario.acessos || (usuario.acessos as any[]).length === 0) {
+     return [];
+   }
+
+   // 3. Mapeia o array de objetos de acesso para um array de strings com os IDs dos equipamentos.
+   const equipamentoIds = (usuario.acessos as any[]).map(acesso => acesso.equipamento);
+
+   return equipamentoIds;
+
+ } catch (error) {
+   console.error(`[UsuarioServices] Erro ao buscar IDs de equipamento para o usuário ${idYD}:`, error);
+   throw new Error('Erro no serviço ao buscar os equipamentos do usuário.');
+ }
+}
+
 async getById(idYD: string) {
+  console.log('ID: ', idYD)
     return prisma.usuarios.findUnique({
       where: { idYD },
       select: {
