@@ -221,6 +221,9 @@ async atualizarAcessoEspecifico(data: UsuarioIdCentralDTO) {
   if (data.password && data.password !== usuario.password) {
     atualizacoes.password = data.password;
   }
+  if (data.base64) {
+    atualizacoes.base64 = data.base64;
+  }
 
   // 3) Atualiza só o acesso desejado
   const equipamentoAlvo = data.acessos[0]; // o equipamento que veio no body
