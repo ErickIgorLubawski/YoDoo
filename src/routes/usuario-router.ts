@@ -20,6 +20,8 @@ export async function usuarioRoutes(fastify: FastifyInstance, options: FastifyPl
     privateRoutes.post("/administrador", controller.createAdm.bind(controller));
     privateRoutes.get("/usuarioslocal", controller.listuserslocais.bind(controller));
     privateRoutes.get("/usuarios/central", controller.listusersequipamento.bind(controller));
+    privateRoutes.get("/usuariosname", controller.findByName.bind(controller));
+
     
    // privateRoutes.get("/usuarios", controller.list.bind(controller));
 

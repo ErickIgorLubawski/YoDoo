@@ -354,6 +354,33 @@ export class UsuarioController {
       return reply.status(400).send({ task: "ERROR", resp: 'erro ao deletar cliente' });
     }
   }
+  async findByName(request: FastifyRequest, reply: FastifyReply) {
+    const ipusuario = request.ip;
+    const { name } = request.query as { name: string };
+  
+    // Validação do parâmetro de busca
+    if (!name || name.trim().length < 2) { // Exige pelo menos 2 caracteres para a busca
+      await logExecution({ ip: ipusuario, class: "UsuarioController", function: "findByName", process: "Validação de entrada", description: "Parâmetro 'name' ausente ou muito curto.", });
+      return reply.status(400).send({ task: "ERROR", resp: 'É necessário fornecer um termo de busca com pelo menos 2 caracteres.' });
+    }
+  
+    try {
+      const service = new UsuarioServices();
+      const usuarios = await service.findByName(name);
+  
+      if (usuarios.length === 0) {
+        await logExecution({ ip: ipusuario, class: "UsuarioController", function: "findByName", process: "Busca por nome", description: `Nenhum usuário encontrado com o termo: '${name}'`, });
+        return reply.status(404).send({ task: "SUCESS", resp: [] }); // Retorna 200 com array vazio ou 404
+      }
+  
+      await logExecution({ ip: ipusuario, class: "UsuarioController", function: "findByName", process: "Busca por nome", description: `Busca por '${name}' realizada com sucesso.`, });
+      return reply.status(200).send({ task: "SUCESS.", resp: usuarios });
+  
+    } catch (error: any) {
+      await logExecution({ ip: ipusuario, class: "UsuarioController", function: "findByName", process: "Busca por nome", description: `Erro ao buscar usuários: ${error.message}`, });
+      return reply.status(500).send({ task: "ERROR", resp: 'Erro interno ao buscar usuários.' });
+    }
+  }
 }
 // equipamento 129
 // "id": 1321,

@@ -5,6 +5,34 @@ import { logExecution } from '../utils/logger';
 
 
 export class UsuarioServices {
+
+  async findByName(name: string): Promise<UsuarioResumo[]> {
+    try {
+      const usuarios = await prisma.usuarios.findMany({
+        where: {
+          name: {
+            contains: name,
+            mode: 'insensitive', // Garante que a busca não seja case-sensitive
+          },
+        },
+        select: {
+          idYD: true,
+          name: true,
+          // password: true, // Considere omitir a senha se não for necessária no front-end
+           acessos: true,
+           createdAt: true,
+           updatedAt: true,
+           base64: true,
+        }
+      });
+      return usuarios;
+    } catch (error: any) {
+      logExecution({ ip: 'N/A', class: "UsuarioServices", function: "findByName", process: "Busca por nome", description: `Erro ao buscar usuários por nome: ${error.message}` });
+      throw new Error('Erro no serviço ao buscar usuários por nome.');
+    }
+  }
+
+  
 async createusuariobiometria(UsuarioDTO: UsuarioDTO) {
   return await prisma.usuarios.create({ data: UsuarioDTO });
 }
@@ -494,3 +522,5 @@ public async validateAdmCredentials(usuario: string, senha: string): Promise<{ i
 
 
 }}
+
+
