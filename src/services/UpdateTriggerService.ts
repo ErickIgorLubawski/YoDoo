@@ -6,8 +6,8 @@ import { StatusUpdateService } from './StatusUpdateService';
 
 const prisma = new PrismaClient(); // <-- CORREÇÃO: Instanciado aqui, seguindo seu padrão
 
-//const UPDATE_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 horas
-const UPDATE_INTERVAL_MS = 1 * 60 * 1000; // 2 minutos
+const UPDATE_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 horas
+//const UPDATE_INTERVAL_MS = 1 * 60 * 1000; // 2 minutos
 const CONFIG_KEY = 'lastStatusUpdateTimestamp';
 
 export class UpdateTriggerService {

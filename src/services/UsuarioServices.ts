@@ -340,6 +340,7 @@ async findUsersByEquipamento(equipamentoId: string): Promise<UsuarioComAcesso[]>
             _id:      0, // Exclui o _id original
             name:     1,
             idYD:     1,
+            base64:  1, // Inclui base64 para retornar a imagem
             createdAt: 1, // Retorna o campo createdAt (virá como {$date: ...})
             updatedAt: 1, // Retorna o campo updatedAt (virá como {$date: ...})
             acessos: {
