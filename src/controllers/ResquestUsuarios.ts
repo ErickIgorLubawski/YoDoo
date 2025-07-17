@@ -127,9 +127,8 @@ console.log('payloads', centralIds)
     return { payloads, centralIds };
   }
   private async sendAll(payloads: Array<Payload<any>>, iprequest: string) {
-
   
-    console.log('payload',payloads)
+    //console.log('payload',payloads)
 
     const tasks: any[] = [];
     let user_idDevice: any[] = []; 
@@ -158,6 +157,7 @@ console.log('payloads', centralIds)
         }
         if (request.method === 'POST' || request.method === 'PUT') {
           user_idDevice = responseData.resp.acessos;
+          console.log('user_idDevice', user_idDevice);
         }
         console.log('✅ [RequestCentral] Detalhes de acesso capturados da central:', JSON.stringify(user_idDevice, null, 2));
         await logExecution({ ip: iprequest, class: "RequestCentral", function: "sendAll", process: `${request.method} -> ${request.endpoint}`, description: `Status ${resp.status}`, });

@@ -4,15 +4,23 @@ import jwt from 'jsonwebtoken';
 import { UsuarioServices } from "../services/UsuarioServices";
 import { logExecution } from "../utils/logger";
 import { RequestCentral } from "./ResquestUsuarios";
+import { UpdateTriggerService } from '../services/UpdateTriggerService';
 import { EquipamentoServices } from '../services/EquipamentoServices';
 
 interface UsuarioToken {
   UsuarioAdminToken: string;
   SenhaToken: string;
 }
+
 export class UsuarioController {
 
+  private updateTriggerService = new UpdateTriggerService(); 
+
   async login(request: FastifyRequest, reply: FastifyReply) {
+
+    this.updateTriggerService.checkAndTriggerUpdate();
+
+
     const ipusuario = request.ip; // Captura o IP para logging
     console.log('IP do usuário:', ipusuario);
     // 1 - Valide o que está recebendo, com retorno

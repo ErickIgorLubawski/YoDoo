@@ -57,20 +57,29 @@ export class RequestEquipamento {
   async Status(ip: string) {
     try {
       const url = `http://${ip}/status`;
-      await axios.get(url, { timeout: 3000 }); // timeout curto evita travar
+      await axios.get(url, { timeout: 9000 }); // timeout curto evita travar
+      console.log('Central online:', url);
       return 'online';
     } catch (err) {
       return 'offline';
     }
   }
-  async StatusEquipamento(ipCentral: string, ipEquipamento: string): Promise<'online' | 'offline'> {
+  async getBulkEquipamentoStatus(ipCentral: string){
     try {
-      const url = `http://${ipCentral}/equipamentos?device_id=${ipEquipamento}`;
-      console.log('url do request: ',url)
-      await axios.get(url, { timeout: 2000 });
-      return 'online';
-    } catch {
-      return 'offline';
+        const url = `http://${ipCentral}/statusequipamentos`;
+        const response = await axios.get(url, { timeout: 9000 }); // Aumentei um pouco o timeout
+
+        console.log(`Requisição para central ${ipCentral} bem-sucedida.`, response.data);
+
+        if (response.data && response.data.task === 'SUCCESS' && Array.isArray(response.data.resp)) {
+            return response.data.resp;
+        }
+        console.error(` Resposta inesperada da central ${ipCentral}:`, response.data);
+        return null; // Retorna nulo se o formato for inválido
+
+    } catch (error) {
+        console.error(`Falha ao conectar na central ${ipCentral} para buscar status de equipamentos.`, error);
+        return null; // Retorna nulo em caso de erro na requisição
     }
-  }
+}
 }

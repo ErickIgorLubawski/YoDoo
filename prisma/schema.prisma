@@ -2,7 +2,8 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider        = "prisma-client-js"
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client" // <-- Adicione esta linha
 }
 
 datasource db {
@@ -83,3 +84,15 @@ model administradores {
   updatedAt     DateTime @updatedAt
   @@map("administradores_2_1")
 }
+
+//  modelo para armazenar O STATUS
+model SystemConfig {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  // A chave da configuração, ex: "lastStatusUpdateTimestamp"
+  key       String   @unique
+  // O valor da configuração, ex: o timestamp em formato ISO
+  value     String
+  // Data da última modificação (útil para auditoria)
+  updatedAt DateTime @updatedAt
+}
+

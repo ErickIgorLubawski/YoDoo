@@ -8,6 +8,8 @@ export async function usuarioRoutes(fastify: FastifyInstance, options: FastifyPl
 
   // 🔓 Rotas públicas
   fastify.post('/usuarios/token', controller.login.bind(controller));
+
+  
   // 🔐 Grupo de rotas protegidas com middleware
   fastify.register(async (privateRoutes) => {
     privateRoutes.addHook("onRequest", verifyToken);
