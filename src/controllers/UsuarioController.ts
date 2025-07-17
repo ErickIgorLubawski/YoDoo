@@ -18,7 +18,7 @@ export class UsuarioController {
 
   async login(request: FastifyRequest, reply: FastifyReply) {
 
-    this.updateTriggerService.checkAndTriggerUpdate();
+    //this.updateTriggerService.checkAndTriggerUpdate();
 
 
     const ipusuario = request.ip; // Captura o IP para logging
@@ -389,7 +389,24 @@ export class UsuarioController {
       return reply.status(500).send({ task: "ERROR", resp: 'Erro interno ao buscar usuários.' });
     }
   }
+  async triggerStatusUpdate(request: FastifyRequest, reply: FastifyReply) {
+    console.log('[API] Requisição para atualizar status recebida.');
+    
+    try {
+      // Instancia e chama o serviço de atualização
+      const updateTriggerService = new UpdateTriggerService();
+      await updateTriggerService.checkAndTriggerUpdate();
+      
+      return reply.status(200).send({ message: 'Processo de atualização iniciado com sucesso.' });
+
+    } catch (error) {
+      console.error('Erro ao acionar a atualização de status:', error);
+      return reply.status(500).send({ error: 'Falha ao iniciar o processo de atualização.' });
+    }
+  }
+
 }
+
 // equipamento 129
 // "id": 1321,
 // "registration": "05050505",

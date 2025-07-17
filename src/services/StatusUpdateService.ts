@@ -39,50 +39,52 @@ export class StatusUpdateService {
   }
 
   private async updateEquipamentosStatus() {
-    // 1. Buscar todas as CENTRAIS, pois a requisição é por central.
+    // ---- PASSO 1: CORRIGIR A BUSCA PARA INCLUIR 'device_id' ----
     const centrais = await prisma.centrais.findMany({
-      select: { id: true, ip_VPN: true }
+      select: { id: true, ip_VPN: true, device_id: true } // << ADICIONADO 'device_id'
     });
-
-    // 2. Criar uma lista de promessas para todas as atualizações de todas as centrais.
+  
     const allPromises = [];
-
+  
     for (const central of centrais) {
-
-      console.log('centrais do banco: ',central)
-
+      console.log('centrais do banco: ', central);
       const ipCentral = central.ip_VPN;
-      if (!ipCentral) continue; // Pula para a próxima central se não houver IP
-
-      // 3. Fazer UMA ÚNICA requisição por central para obter o status de TODOS os seus equipamentos.
+      if (!ipCentral) continue;
+  
       const statusList = await this.requestEquipamento.getBulkEquipamentoStatus(ipCentral);
-
       console.log('statusList: ', statusList);
-
-      // 4. Se a resposta for válida (não nula e com itens), processar a lista de status.
-      if (statusList && statusList.length > 0) {
-        logExecution({ip: 'SERVER', class: 'StatusUpdateService', function: 'updateEquipamentosStatus',process: `Processando ${statusList.length} equipamentos da central ${central.id}`,description: `Requisição para ${ipCentral} bem-sucedida.`
-        });
-        
+  
+      if (statusList) {
+        // Esta parte já estava correta.
         for (const equipamentoStatus of statusList) {
-          // 5. Para cada item da lista, criar uma promessa de atualização no banco
-          //    usando o IP do equipamento para encontrá-lo.
           const updatePromise = prisma.equipamentos.updateMany({
-            where: {
-              ip: equipamentoStatus.ip,
-              // Opcional: garantir que o equipamento pertence à central correta.
-              // central_id: central.id 
-            },
-            data: {
-              status: equipamentoStatus.status,
-            },
+            where: { ip: equipamentoStatus.ip },
+            data: { status: equipamentoStatus.status },
           });
           allPromises.push(updatePromise);
         }
+      } else {
+        // A central está offline.
+        console.warn(`Central ${central.id} (Device ID: ${central.device_id}) offline. Marcando seus equipamentos como 'offline'.`);
+  
+        // ---- PASSO 2: USAR O 'device_id' CORRETO NA ATUALIZAÇÃO ----
+        const updateOfflinePromise = prisma.equipamentos.updateMany({
+          where: {
+            central_id: central.device_id, // << CORRIGIDO de central.id para central.device_id
+          },
+          data: {
+            status: 'offline',
+          },
+        });
+        allPromises.push(updateOfflinePromise);
       }
     }
-
-    // 6. Aguardar a conclusão de TODAS as promessas de atualização de todos os equipamentos.
-    await Promise.allSettled(allPromises);
+  
+    if (allPromises.length > 0) {
+      await Promise.allSettled(allPromises);
+      console.log('--- ATUALIZAÇÃO DE STATUS DE EQUIPAMENTOS CONCLUÍDA ---');
+    } else {
+      console.log('--- NENHUMA ATUALIZAÇÃO DE STATUS DE EQUIPAMENTOS A FAZER ---');
+    }
   }
 }

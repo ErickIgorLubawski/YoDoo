@@ -54,32 +54,58 @@ export class RequestEquipamento {
 
 
   
-  async Status(ip: string) {
+  async Status(ip: string): Promise<'online' | 'offline'> {
     try {
       const url = `http://${ip}/status`;
-      await axios.get(url, { timeout: 9000 }); // timeout curto evita travar
-      console.log('Central online:', url);
+      await axios.get(url, { timeout: 9000 });
+      console.log(`[Status Check] Central ${ip} respondeu. Status: online.`);
       return 'online';
     } catch (err) {
+      if (axios.isAxiosError(err)) {
+        // O erro é do tipo AxiosError, podemos checar a resposta.
+        if (err.response) {
+          // O servidor respondeu com um status de erro (4xx, 5xx).
+          // A sua requisição para tratar 404 é coberta aqui.
+          console.warn(`[Status Check] Central ${ip} retornou status ${err.response.status}. Marcando como offline.`);
+        } else if (err.request) {
+          // A requisição foi feita, mas não houve resposta (timeout, sem conexão).
+          console.warn(`[Status Check] Central ${ip} não respondeu. Marcando como offline.`);
+        }
+      } else {
+        // Erro inesperado não relacionado ao Axios.
+        console.error(`[Status Check] Erro inesperado ao verificar ${ip}.`, err);
+      }
       return 'offline';
     }
   }
-  async getBulkEquipamentoStatus(ipCentral: string){
+  async getBulkEquipamentoStatus(ipCentral: string): Promise<any[] | null> {
     try {
-        const url = `http://${ipCentral}/statusequipamentos`;
-        const response = await axios.get(url, { timeout: 9000 }); // Aumentei um pouco o timeout
-
-        console.log(`Requisição para central ${ipCentral} bem-sucedida.`, response.data);
-
-        if (response.data && response.data.task === 'SUCCESS' && Array.isArray(response.data.resp)) {
-            return response.data.resp;
+      const url = `http://${ipCentral}/statusequipamentos`;
+      const response = await axios.get(url, { timeout: 9000 });
+  
+      if (response.data?.task === 'SUCCESS' && Array.isArray(response.data.resp)) {
+        console.log(`[Bulk Status] Sucesso ao buscar status da central ${ipCentral}.`);
+        return response.data.resp;
+      }
+  
+      console.error(`[Bulk Status] Resposta em formato inesperado da central ${ipCentral}:`, response.data);
+      return null;
+  
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        if (err.response) {
+          // Incluindo o status 404, conforme solicitado.
+          console.warn(`[Bulk Status] Central ${ipCentral} respondeu com erro ${err.response.status}. Impossível obter status dos equipamentos.`);
+        } else if (err.request) {
+          console.warn(`[Bulk Status] Falha de conexão com a central ${ipCentral}.`);
         }
-        console.error(` Resposta inesperada da central ${ipCentral}:`, response.data);
-        return null; // Retorna nulo se o formato for inválido
-
-    } catch (error) {
-        console.error(`Falha ao conectar na central ${ipCentral} para buscar status de equipamentos.`, error);
-        return null; // Retorna nulo em caso de erro na requisição
+      } else {
+        console.error(`[Bulk Status] Erro inesperado ao buscar status em ${ipCentral}.`, err);
+      }
+      
+      // Retornar 'null' é a forma correta de sinalizar para a lógica de negócio
+      // que a central (e consequentemente todos os seus equipamentos) está inacessível/offline.
+      return null;
     }
-}
+  }
 }
