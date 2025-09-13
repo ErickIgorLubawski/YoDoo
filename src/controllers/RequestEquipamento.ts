@@ -18,22 +18,6 @@ export class RequestEquipamento {
   }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   async searchInfoCentral(ipcentralmrd: string) {
     
     try {

@@ -31,7 +31,6 @@ export class EquipamentoController {
       const id = await servicecentral.searchIdCentral(ipcentralmrd);
       const central_id = id?.device_id.toString()
 
-
     
       //Equipamentos do banco
       const serviceequipamento = new EquipamentoServices();
