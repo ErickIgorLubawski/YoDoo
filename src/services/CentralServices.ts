@@ -57,7 +57,7 @@ export class CentralServices {
         device_id: true,
       },
     });
-
+    console.log('central: ', central)
     return central;
   }
   async list() {

@@ -5,7 +5,7 @@ import { centralRoutes } from './routes/centrais-router';
 import { equipamentoRoutes } from './routes/equipamentos-router';
 import { usuarioRoutes } from './routes/usuario-router';
 import { logExecution } from './utils/logger';
-
+import 'dotenv/config';
 
 const app = Fastify({logger: true});
 

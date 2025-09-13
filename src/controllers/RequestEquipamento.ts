@@ -5,16 +5,35 @@ import { EquipamentoUpdateDTO } from '../DTOs/EquipamentoDTO';
 export class RequestEquipamento {
   
   async searchInfoEquipamento(ipcentralmrd: any) {
+    //const port = process.env.CENTRAL_PORT
     try {
-      const url = `http://${ipcentralmrd}/findEqs`;
-      console.log(url);
+      const url = `http://${ipcentralmrd}:${process.env.PORTA_CENTRAL}/findEqs`;
+      console.log('contrucão da URL: ',url);
       const response = await axios.get(url);
-      console.log(response.data);
+      console.log('resposta da central ', response.data);
       return response.data;
     } catch (err) {
       return {ServerResponse}
     }
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   async searchInfoCentral(ipcentralmrd: string) {
     
     try {

@@ -22,20 +22,23 @@ export class EquipamentoController {
       const requestequipamento = new RequestEquipamento()
       const equipamentoscentral = await requestequipamento.searchInfoEquipamento(ipcentralmrd)
       const listaEquipamentoscentral = equipamentoscentral?.resp?.ListadeEqs ?? [];
-      console.log('equipamentos central: ', listaEquipamentoscentral)
+
+      
 
       //idcentral
       const servicecentral = new CentralServices();
+      console.log('ipcentralmrd: ', ipcentralmrd)
       const id = await servicecentral.searchIdCentral(ipcentralmrd);
       const central_id = id?.device_id.toString()
-      console.log('central_id:', id)
-      console.log('central_id:', central_id)
+
 
     
       //Equipamentos do banco
       const serviceequipamento = new EquipamentoServices();
       const equipamentosdb = await serviceequipamento.list();
-      console.log('equipamentos banco: ', equipamentosdb)
+
+
+      console.log('equipamentosdb: ', equipamentosdb)
 
       const idsBanco = new Set(equipamentosdb.map(e => e.device_id));
       // Filtrar apenas os equipamentos da central que NÃO estão no banco
@@ -47,7 +50,6 @@ export class EquipamentoController {
         await logExecution({ ip: iprequest, class: "EquipamentoController", function: "create", process: "nenhum novo equipamento", description: "nenhum novo para cadastrar", });
         return reply.status(200).send({ task: "SUCESS.", resp: listaEquipamentoscentral, message: "Nenhum novo equipamento cadastrado. Apenas retorno da central.", });
       }
-      console.log('novos para cadastrar:', novosEquipamentos);
       // Mapear os dados corretamente e salvar um a um
       for (const equip of novosEquipamentos) {
         await serviceequipamento.create({
@@ -160,11 +162,11 @@ export class EquipamentoController {
       });
 
       // 2.5) paralelizar status
-      const equipamentosWithStatus: EquipamentoWithStatusDTO[] =
+      //const equipamentosWithStatus: EquipamentoWithStatusDTO[] =
         await Promise.all(
           equipamentos.map(async eq => {
             const ipCentral = centralMap[eq.central_id] || '';
-            const status = await statusRequester.StatusEquipamento(ipCentral,eq.ip);
+            //const status = await statusRequester.StatusEquipamento(ipCentral,eq.ip);
       
             return {
               ...eq,
@@ -178,7 +180,7 @@ export class EquipamentoController {
 
       await logExecution({ ip: ipRequest,class: 'EquipamentoController',function: 'listEquipamentos', process: 'lista todos equipamentos com status',description: 'sucess' });
 
-      return reply.status(200).send({ task: 'SUCESS.', resp: equipamentosWithStatus });
+    //  return reply.status(200).send({ task: 'SUCESS.', resp: equipamentosWithStatus });
 
     } catch (err: any) {
       await logExecution({ip: ipRequest,class: 'EquipamentoController',function: 'listEquipamentos',process: 'erro ao listar equipamentos',description: 'error' });
