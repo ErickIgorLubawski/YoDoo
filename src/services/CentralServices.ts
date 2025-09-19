@@ -66,6 +66,12 @@ export class CentralServices {
   async getById(device_id: string) {
     return await prisma.centrais.findUnique({ where: { device_id } });
   }
+  async setOfflineByDeviceId(device_id: string) {
+    return prisma.centrais.update({
+      where: { device_id },
+      data: { status: "offline" },
+    });
+  }
   async update(data: CentralUpdateDTO) {
     const { device_id, ...rest } = data;
     

@@ -6,6 +6,7 @@ import { logExecution } from "../utils/logger";
 import { RequestCentral } from "./ResquestUsuarios";
 import { UpdateTriggerService } from '../services/UpdateTriggerService';
 import { EquipamentoServices } from '../services/EquipamentoServices';
+import { CentralServices } from '../services/CentralServices';
 
 interface UsuarioToken {
   UsuarioAdminToken: string;
@@ -99,9 +100,8 @@ export class UsuarioController {
 
       const centralResult = await serviceCentral.processarUsuarioCentral(UsuarioDTO, ipusuario, "POST");
       const accessResults = centralResult.result.user_idDevice; 
-      console.log('acessos do id equipamento usuario:', accessResults)
+
       // --- A LÓGICA MAIS SIMPLES PARA LER O RESULTADO ---
-      
       // 1. Criamos uma variável para controlar se o usuário já existe.
       let usuarioJaCadastrado = false;
       
@@ -125,17 +125,21 @@ export class UsuarioController {
 
       // Para outros erros, podemos usar a sua lógica original com uma pequena adaptação.
       // Verificamos se a string 'ERROR' aparece no array.
+      
+      
+ //     const user_idEquipamento = centralResult.result.user_idDevice?.toString()
+      
 
-      const user_idEquipamento = centralResult.result.user_idDevice?.toString()
+
       const idcentral = centralResult.idacessos
+
 
       // console.log('status resposta da central: ',responseCentral)
       // console.log('ID do usuario na central: ',user_idEquipamento)
       // console.log('id da central: ',idcentral)
       const UsuarioIdCentral: UsuarioIdCentralDTO = {
         ...UsuarioDTO,
-        user_idEquipamento, 
-        idcentral: idcentral.join(','),
+        idcentral, // mantém array mesmo!
       };
 
       // Teste pra mais de uma central equipamento
@@ -164,6 +168,12 @@ export class UsuarioController {
       return reply.status(200).send({ task: "SUCESS", resp:"criação de novo usuario ok", usuarios });
 
     } catch (error: any) {
+
+      if (error.message?.includes("Timeout")) {
+        await logExecution({ ip: ipusuario,class: "UsuarioController",function: "createbiometria",process: "Comunicação com central",description: `Timeout: ${error.message}`,});
+        return reply.status(504).send({ task: "ERROR", resp: "Tempo limite excedido ao tentar comunicar com a equipamento.",
+        });
+      }
       await logExecution({ ip: ipusuario, class: "UsuarioController", function: "createbiometria", process: "criação de biometria", description: "error", });;
       return reply.status(500).send({ task: "ERROR", resp: 'falha ao cadastar' });
     }
@@ -224,7 +234,7 @@ export class UsuarioController {
       const service = new UsuarioServices();
 
       const usuariosnoequipamento = await service.findUsersByEquipamento(equipamento)
-
+      console.log(usuariosnoequipamento)
       if (!usuariosnoequipamento) {
         return reply.status(404).send({ resp: "Cliente não encontrado(a)" });
       }
@@ -248,14 +258,14 @@ export class UsuarioController {
       //const central = '22'
       const usuarioncentral =  await service.findCentralUsers(central)
       //const usuarioncentral = ''
-      // if (!usuarioncentral) {
-      //   return reply.status(404).send({ resp: "Cliente não encontrado(a)" });
-      // }
+      if (!usuarioncentral) {
+         return reply.status(404).send({ resp: "Nenhum cliente nessa central" });
+       }
       await logExecution({ ip: ipusuario, class: "UsuarioController", function: "listusers", process: "listar usuario no equipamento", description: "sucess", });;
       return reply.status(200).send({ task: "SUCESS", resp: usuarioncentral });
     } catch (error: any) {
       await logExecution({ ip: ipusuario, class: "UsuarioController", function: "listusers", process: "listar usuario no equipamento", description: "error", });;
-      return reply.status(404).send({ task: "ERROR", resp: 'cliente não encontrado' });
+      return reply.status(404).send({ task: "ERROR", resp: 'central não encontrado' });
     }
   }
   async update(request: FastifyRequest, reply: FastifyReply) {
@@ -277,7 +287,7 @@ export class UsuarioController {
       const idcentral = centralResult.idacessos
       const UsuarioIdCentral: UsuarioIdCentralDTO = {
         ...Usuario,
-        idcentral: idcentral.join(','),
+        idcentral: idcentral,
       };
 
       console.log('payload', UsuarioIdCentral)

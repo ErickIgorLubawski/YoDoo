@@ -37,7 +37,6 @@ async createusuariobiometria(UsuarioDTO: UsuarioDTO) {
   return await prisma.usuarios.create({ data: UsuarioDTO });
 }
 async findByIdYD(idYD: string) {
-  console.log('ID: ', idYD)
   return await prisma.usuarios.findFirst({where: { idYD: idYD }});
 }
 
@@ -125,33 +124,35 @@ async delete(idYD: string) {
   });
 }
 async createUserAcess(data: UsuarioIdCentralDTO) {
-  // Monta o array de objetos de acesso
-  const acessosDocs: AcessoDoc[] = data.acessos.map(equipId => ({
-    central:              data.idcentral,                // url da central
-    equipamento:          equipId,                       // equipamento único
-    user_idEquipamento:   data.user_idEquipamento,           // string
-    begin_time:           data.begin_time,
-    end_time:             data.end_time,
+  // garante que o tamanho de idcentral e acessos é o mesmo
+  if (data.idcentral.length !== data.acessos.length) {
+    throw new Error('Número de centrais não corresponde ao número de equipamentos');
+  }
+
+  const acessosDocs: AcessoDoc[] = data.acessos.map((equipId, index) => ({
+    central: data.idcentral[index],   // 👈 agora cada equipamento recebe sua central correta
+    equipamento: equipId,
+    user_idEquipamento: data.idYD,
+    begin_time: data.begin_time,
+    end_time: data.end_time,
   }));
-  // Persiste no Mongo via Prisma
+
   return prisma.usuarios.create({
     data: {
-      name:     data.name,
-      idYD:     data.idYD,
+      name: data.name,
+      idYD: data.idYD,
       password: data.password,
-      base64:   data.base64,
-      acessos:  acessosDocs as any     // << array de sub-documentos
+      base64: data.base64,
+      acessos: acessosDocs as any
     }
-    
-  }
-);
+  });
 }
 async  adicionarAcesso(data: UsuarioIdCentralDTO) {
   // 1. Cria o novo acesso como objeto
   const novoAcesso: AcessoDoc = {
-    central:     data.idcentral,
+    central:     Array.isArray(data.idcentral) ? data.idcentral[0] : data.idcentral,
     equipamento: data.acessos[0],  // supondo um único equipamento por vez
-    user_idEquipamento:      data.user_idEquipamento,
+    user_idEquipamento:      data.idYD,
     begin_time:  data.begin_time,
     end_time:    data.end_time,
   };
@@ -311,11 +312,11 @@ async  atualizarUsuarioEAcessos(data: UsuarioIdCentralDTO) {
 
   // 3. Substitui o array de acessos, se enviado
   if (Array.isArray(data.acessos) && data.acessos.length > 0) {
-    const novosAcessos: AcessoDoc[] = data.acessos.map(equipId => ({
-      central:         data.idcentral,
-      equipamento:     equipId,
-      begin_time:      data.begin_time,
-      end_time:        data.end_time,
+    const novosAcessos: AcessoDoc[] = data.acessos.map((equipId, index) => ({
+      central: Array.isArray(data.idcentral) ? data.idcentral[index] : data.idcentral,
+      equipamento: equipId,
+      begin_time: data.begin_time,
+      end_time: data.end_time,
     }));
 
     atualizacoes.acessos = novosAcessos;

@@ -5,15 +5,18 @@ import { EquipamentoServices } from "../services/EquipamentoServices";
 import { CentralServices } from "../services/CentralServices";
 import { Payload, MetodoHttp } from "../DTOs/RequestCentralDTO";
 import { UsuarioServices } from "../services/UsuarioServices";
+import { prisma } from "../config/db";
+
+
 
 export class RequestCentral {
 
   async processarUsuarioCentral(data: UsuarioDTO, iprequest: string, method: MetodoHttp) {
 
     const payloads = await this.buildPayloads(data, method);
-    const result = await this.sendAll(payloads.payloads, iprequest);
-
+    const result = await this.sendAll(payloads.payloads, iprequest, payloads.centralIds);
     const idacessos = payloads.centralIds
+    
     return { result, idacessos }
   }
 
@@ -35,10 +38,8 @@ export class RequestCentral {
 
 
     const centralIds = Array.from(new Set(equipamentos.map(e => e.central_id)));
-    console.log('centralIds', centralIds)
     const centralMRD = new CentralServices();
     const centraisIps = await centralMRD.getByDeviceIds(centralIds);
-    console.log('centraisIps', centraisIps)
 
     const centralIpMap: { [centralId: string]: string } = {};
     centraisIps.forEach(c => {
@@ -64,9 +65,6 @@ export class RequestCentral {
       // Produção        Monta URL dinâmica
       const centralIp = centralIpMap[centralId]; // IP real da central
       const baseUrl = `http://${centralIp}`;   // monta URL dinâmica
-      
-      console.log('centraisIps', centraisIps)
-      console.log('equipamentoIps',equipamentoIps)
       //4408801109357360 - 192.168.0.23
       //4408801109345045 - 192.168.0.129
 
@@ -120,18 +118,17 @@ export class RequestCentral {
 
       }
     }
-console.log('payloads', payloads)
-console.log('payloads', centralIds)
-
 
     return { payloads, centralIds };
   }
-  private async sendAll(payloads: Array<Payload<any>>, iprequest: string) {
+  private async sendAll(payloads: Array<Payload<any>>, iprequest: string, centralIds: string[]) {
   
     //console.log('payload',payloads)
 
     const tasks: any[] = [];
     let user_idDevice: any[] = []; 
+    const centralService = new CentralServices();
+
     for (const request of payloads) {
 
 
@@ -141,31 +138,39 @@ console.log('payloads', centralIds)
           url: request.endpoint,
           method: request.method,
           data: request.body,
+          timeout: 5000
         });
-
-
+        console.log(resp)
 
         const responseData = resp.data;
-        console.log('resp Central ', responseData);
 
         tasks.push(responseData);
         console.log(responseData)
+
         const data = resp.data;
-        if (data.task) {
-          tasks.push(data.task);
-          tasks.toString()
+        
+        if (data.task) 
+        {
+          tasks.push(data.task);tasks.toString()
         }
         if (request.method === 'POST' || request.method === 'PUT') {
           user_idDevice = responseData.resp.acessos;
-          console.log('user_idDevice', user_idDevice);
+        
         }
-        console.log('✅ [RequestCentral] Detalhes de acesso capturados da central:', JSON.stringify(user_idDevice, null, 2));
+
+
         await logExecution({ ip: iprequest, class: "RequestCentral", function: "sendAll", process: `${request.method} -> ${request.endpoint}`, description: `Status ${resp.status}`, });
       } catch (err: any) {
-        await logExecution({ ip: iprequest, class: "RequestCentral", function: "sendAll", process: `Erro ${request.method} -> ${request.endpoint}`, description: err.message, });
-        return { tasks, user_idDevice };
+        if (err.code === "ECONNABORTED") {
+          await logExecution({ip: iprequest,class: "RequestCentral",function: "sendAll",process: `Timeout ${request.method} -> ${request.endpoint}`,description: `Requisição expirada (${err.message})`,
+          });
+          for (const id of centralIds) {
+            await centralService.setOfflineByDeviceId(id);
+          }
+        throw new Error(`Timeout na requisição para ${request.endpoint}`);
+      }
       }
     }
-    return { tasks, user_idDevice };
+    return { tasks, user_idDevice, Response};
   }
 }
