@@ -129,10 +129,13 @@ async createUserAcess(data: UsuarioIdCentralDTO) {
     throw new Error('Número de centrais não corresponde ao número de equipamentos');
   }
 
+  // limpa idYD (remove letras, espaços, símbolos)
+  const cleanIdYD = data.idYD.replace(/\D/g, '');
+
   const acessosDocs: AcessoDoc[] = data.acessos.map((equipId, index) => ({
-    central: data.idcentral[index],   // 👈 agora cada equipamento recebe sua central correta
+    central: data.idcentral[index],
     equipamento: equipId,
-    user_idEquipamento: data.idYD,
+    user_idEquipamento: cleanIdYD, // 👈 já entra limpinho
     begin_time: data.begin_time,
     end_time: data.end_time,
   }));
@@ -140,13 +143,14 @@ async createUserAcess(data: UsuarioIdCentralDTO) {
   return prisma.usuarios.create({
     data: {
       name: data.name,
-      idYD: data.idYD,
+      idYD: cleanIdYD, // 👈 salva só números
       password: data.password,
       base64: data.base64,
       acessos: acessosDocs as any
     }
   });
 }
+
 async  adicionarAcesso(data: UsuarioIdCentralDTO) {
   // 1. Cria o novo acesso como objeto
   const novoAcesso: AcessoDoc = {
