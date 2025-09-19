@@ -288,6 +288,7 @@ export class UsuarioController {
       const UsuarioIdCentral: UsuarioIdCentralDTO = {
         ...Usuario,
         idcentral: idcentral,
+        
       };
 
       console.log('payload', UsuarioIdCentral)
