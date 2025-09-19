@@ -6,10 +6,22 @@ import { equipamentoRoutes } from './routes/equipamentos-router';
 import { usuarioRoutes } from './routes/usuario-router';
 import { logExecution } from './utils/logger';
 import 'dotenv/config';
+const fastify = require('fastify')({ logger: true });
+const fastifyStatic = require('@fastify/static');
+const path = require('path');
+
+// Configuração de CORS para permitir preflight OPTIONS e envio de Authorization
+
+
+
 
 const app = Fastify({logger: true});
 
-// Configuração de CORS para permitir preflight OPTIONS e envio de Authorization
+app.register(fastifyStatic, {
+    root: '/home/convidado/www/FrontEnd',
+    prefix: '/',
+    index: ['login.html'],
+});
 
   
 
@@ -26,6 +38,10 @@ const start = async () => {
         await app.register(usuarioRoutes);
         await app.register(centralRoutes);
         await app.register(equipamentoRoutes);
+
+
+
+
         const porta = process.env.PORTA_SERVER;
         if (!porta) {
             console.log('Variável de ambiente PORTA_CENTRAL não definida.')
