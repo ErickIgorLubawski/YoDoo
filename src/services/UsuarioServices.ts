@@ -124,18 +124,25 @@ async delete(idYD: string) {
   });
 }
 async createUserAcess(data: UsuarioIdCentralDTO) {
+  console.log("📌 [Service] Dados recebidos em createUserAcess:", JSON.stringify(data, null, 2));
+
   // garante que o tamanho de idcentral e acessos é o mesmo
-  if (data.idcentral.length !== data.acessos.length) {
-    throw new Error('Número de centrais não corresponde ao número de equipamentos');
-  }
+  // if (data.idcentral.length !== data.acessos.length) {
+  //   console.error("❌ [Service] Quantidade de centrais != quantidade de acessos");
+  //   console.error("idcentral:", data.idcentral);
+  //   console.error("acessos:", data.acessos);
+  //   throw new Error('Número de centrais não corresponde ao número de equipamentos');
+  // }
 
   const acessosDocs: AcessoDoc[] = data.acessos.map((equipId, index) => ({
-    central: data.idcentral[index],   // 👈 agora cada equipamento recebe sua central correta
+    central: data.idcentral[index],
     equipamento: equipId,
     user_idEquipamento: data.idYD,
     begin_time: data.begin_time,
     end_time: data.end_time,
   }));
+
+  console.log("📌 [Service] acessosDocs montado:", JSON.stringify(acessosDocs, null, 2));
 
   return prisma.usuarios.create({
     data: {
@@ -147,6 +154,7 @@ async createUserAcess(data: UsuarioIdCentralDTO) {
     }
   });
 }
+
 async  adicionarAcesso(data: UsuarioIdCentralDTO) {
   // 1. Cria o novo acesso como objeto
   const novoAcesso: AcessoDoc = {

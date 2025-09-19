@@ -122,53 +122,80 @@ export class RequestCentral {
     return { payloads, centralIds };
   }
   private async sendAll(payloads: Array<Payload<any>>, iprequest: string, centralIds: string[]) {
-  
-    //console.log('payload',payloads)
-
     const tasks: any[] = [];
-    let user_idDevice: any[] = []; 
+    let user_idDevice: any[] = [];
     const centralService = new CentralServices();
-
-    for (const request of payloads) {
-
-
-
+  
+    console.log(`>>> Iniciando sendAll com ${payloads.length} payload(s)`);
+    
+    for (const [index, request] of payloads.entries()) {
+      console.log(`\n--- [${index + 1}/${payloads.length}] Enviando requisição ---`);
+      console.log(`Endpoint: ${request.endpoint}`);
+      console.log(`Method: ${request.method}`);
+      console.log(`Body:`, request.body);
+  
       try {
         const resp = await axios({
           url: request.endpoint,
           method: request.method,
           data: request.body,
-          timeout: 5000
+          timeout: 10000,
         });
-        console.log(resp)
-
+  
+        console.log(`[${index + 1}] ✔ Sucesso - Status: ${resp.status}`);
+        console.log(`[${index + 1}] Response Data:`, resp.data);
+  
         const responseData = resp.data;
-
         tasks.push(responseData);
-        console.log(responseData)
-
-        const data = resp.data;
-        
-        if (data.task) 
-        {
-          tasks.push(data.task);tasks.toString()
+  
+        if (responseData.task) {
+          tasks.push(responseData.task);
+          console.log(`[${index + 1}] Task adicionada: ${responseData.task}`);
         }
-        if (request.method === 'POST' || request.method === 'PUT') {
-          user_idDevice = responseData.resp.acessos;
+  
+        if (request.method === "POST" || request.method === "PUT") {
+          user_idDevice = responseData.resp?.acessos || [];
+          console.log(`[${index + 1}] user_idDevice atualizado:`, user_idDevice);
         }
-
-        await logExecution({ ip: iprequest, class: "RequestCentral", function: "sendAll", process: `${request.method} -> ${request.endpoint}`, description: `Status ${resp.status}`, });
+  
+        await logExecution({
+          ip: iprequest,
+          class: "RequestCentral",
+          function: "sendAll",
+          process: `${request.method} -> ${request.endpoint}`,
+          description: `Status ${resp.status}`,
+        });
       } catch (err: any) {
+        console.error(`[${index + 1}] ✖ Erro na requisição -> ${request.endpoint}`);
+        console.error("Detalhes do erro:", err.message);
+  
         if (err.code === "ECONNABORTED") {
-          await logExecution({ip: iprequest,class: "RequestCentral",function: "sendAll",process: `Timeout ${request.method} -> ${request.endpoint}`,description: `Requisição expirada (${err.message})`,
+          await logExecution({
+            ip: iprequest,
+            class: "RequestCentral",
+            function: "sendAll",
+            process: `Timeout ${request.method} -> ${request.endpoint}`,
+            description: `Requisição expirada (${err.message})`,
           });
+  
           for (const id of centralIds) {
+            console.warn(`[${index + 1}] Marcando central ${id} como OFFLINE`);
             await centralService.setOfflineByDeviceId(id);
           }
-        throw new Error(`Timeout na requisição para ${request.endpoint}`);
-      }
+  
+          throw new Error(`Timeout na requisição para ${request.endpoint}`);
+        }
+  
+        // Re-lança para o catch da camada superior
+        throw err;
       }
     }
-    return { tasks, user_idDevice, Response};
+  
+    console.log("\n>>> sendAll finalizado");
+    console.log("Tasks acumuladas:", tasks);
+    console.log("user_idDevice final:", user_idDevice);
+  
+    return { tasks };
   }
+  
 }

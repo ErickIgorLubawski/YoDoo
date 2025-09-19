@@ -81,91 +81,136 @@ export class UsuarioController {
   }
 
   async createBiometria(request: FastifyRequest, reply: FastifyReply) {
-
-    const ipusuario = request.ip
+    const ipusuario = request.ip;
     const UsuarioDTO = request.body as UsuarioDTO;
-
-    if (!UsuarioDTO.name || !UsuarioDTO.idYD || !UsuarioDTO.password || !UsuarioDTO.begin_time || !UsuarioDTO.end_time || !UsuarioDTO.acessos) {
-      return reply.status(400).send({ task: "ERROR", resp: 'campos não preenchidos' });
+  
+    if (
+      !UsuarioDTO.name ||
+      !UsuarioDTO.idYD ||
+      !UsuarioDTO.password ||
+      !UsuarioDTO.begin_time ||
+      !UsuarioDTO.end_time ||
+      !UsuarioDTO.acessos
+    ) {
+      return reply.status(400).send({ task: "ERROR", resp: "campos não preenchidos" });
     }
+  
     try {
       const serviceCentral = new RequestCentral();
-
       const equipamentoServices = new EquipamentoServices();
+  
       // Verifica se o equipamento existe
       const equipamentos = await equipamentoServices.getIpsAndCentralByDeviceIds(UsuarioDTO.acessos);
       if (!equipamentos || equipamentos.length === 0) {
-        return reply.status(404).send({ task: "ERROR", resp: 'Equipamento não encontrado' });
+        return reply.status(404).send({ task: "ERROR", resp: "Equipamento não encontrado" });
       }
-
-      const centralResult = await serviceCentral.processarUsuarioCentral(UsuarioDTO, ipusuario, "POST");
-      const accessResults = centralResult.result.user_idDevice; 
-
-      // --- A LÓGICA MAIS SIMPLES PARA LER O RESULTADO ---
-      // 1. Criamos uma variável para controlar se o usuário já existe.
+  
+      let centralResult;
+      try {
+        // Aqui o try/catch é específico só para a chamada da central
+        centralResult = await serviceCentral.processarUsuarioCentral(UsuarioDTO, ipusuario, "POST");
+      } catch (error: any) {
+        if (error.message?.includes("Timeout")) {
+          await logExecution({
+            ip: ipusuario,
+            class: "UsuarioController",
+            function: "createbiometria",
+            process: "Comunicação com central",
+            description: `Timeout: ${error.message}`,
+          });
+          return reply.status(504).send({
+            task: "ERROR",
+            resp: "Tempo limite excedido ao tentar comunicar com o equipamento.",
+          });
+        }
+        throw error; // relança para cair no catch genérico
+      }
+  
+      //const accessResults = centralResult.result.user_idDevice;
+  
+      console.log("centralResult", centralResult);
+      //console.log("accessResults", accessResults);
+  
       let usuarioJaCadastrado = false;
-      
-      // 2. Usamos um loop 'for' para verificar cada item retornado pela central.
+  
       for (const item of centralResult.result.tasks) {
-        // Verificamos se o item é o objeto de erro que procuramos.
-        // A verificação 'item && item.ERROR' garante que o código não quebre se o item não for um objeto.
-        if (item && item.ERROR && item.ERROR[0]?.status === 'cliente ja cadastrado') {
-          usuarioJaCadastrado = true; // Se encontrarmos, mudamos a variável para true...
-          break; // ...e saímos do loop, pois já temos a resposta.
+        if (item && item.ERROR && item.ERROR[0]?.status === "cliente ja cadastrado") {
+          usuarioJaCadastrado = true;
+          break;
         }
       }
-
-      // 3. Agora, verificamos o valor da nossa variável.
+  
       if (usuarioJaCadastrado) {
-        return reply.status(409).send({  task: "ERROR", resp: 'Usuário já cadastrado no equipamento.' });
+        return reply.status(409).send({ task: "ERROR", resp: "Usuário já cadastrado no equipamento." });
       }
-      if (centralResult.result.tasks.includes('ERROR')) {
-          return reply.status(500).send({ task: "ERROR", resp: 'Ocorreu um erro na comunicação com o equipamento.' });
-      }
-      //const user_idEquipamento = centralResult.result.user_idDevice?.toString()
-      const idcentral = centralResult.idacessos
-
-      const UsuarioIdCentral: UsuarioIdCentralDTO = {
-        ...UsuarioDTO,
-        idcentral, // mantém array mesmo!
-      };
-
-      // Teste pra mais de uma central equipamento
-      // const UsuarioIdCentral: UsuarioIdCentralDTO = {
-      //   name: 'Erick DEV',
-      //   idYD: '10',
-      //   password: '548837',
-      //   begin_time: '01-06-2025 20:00:00',
-      //   end_time: '01-2025 20:01:00',
-      //   acessos: ['4408801109345045'],
-      //   bio: 'testede bio',
-      //   base64: '/9j/4AA',
-      //   user_idEquipamento: '178',
-      //   idcentral: '1'
-      // }
-      const service = new UsuarioServices();
-      const exists = await service.findByIdYD(UsuarioDTO.idYD);
-
-      if (!exists) {
-        const usuario = await service.createUserAcess(UsuarioIdCentral);
-        await logExecution({ ip: ipusuario, class: "UsuarioController", function: "createbiometria", process: "criação de novo acesso ok", description: "sucess", });;
-        return reply.status(200).send({ task: "SUCESS", resp:"criação de novo acesso ok", usuario });
-      }
-      const usuarios = await service.adicionarAcesso(UsuarioIdCentral);
-      await logExecution({ ip: ipusuario, class: "UsuarioController", function: "createbiometria", process: "criação de biometria", description: "sucess", });;
-      return reply.status(200).send({ task: "SUCESS", resp:"criação de novo usuario ok", usuarios });
-
-    } catch (error: any) {
-
-      if (error.message?.includes("Timeout")) {
-        await logExecution({ ip: ipusuario,class: "UsuarioController",function: "createbiometria",process: "Comunicação com central",description: `Timeout: ${error.message}`,});
-        return reply.status(504).send({ task: "ERROR", resp: "Tempo limite excedido ao tentar comunicar com a equipamento.",
+  
+      if (centralResult.result.tasks.includes("ERROR")) {
+        return reply.status(500).send({
+          task: "ERROR",
+          resp: "Ocorreu um erro na comunicação com o equipamento.",
         });
       }
-      await logExecution({ ip: ipusuario, class: "UsuarioController", function: "createbiometria", process: "criação de biometria", description: "error", });;
-      return reply.status(500).send({ task: "ERROR", resp: 'falha ao cadastar' });
+  
+      const idcentral = centralResult.idacessos;
+  
+      const UsuarioIdCentral: UsuarioIdCentralDTO = {
+        ...UsuarioDTO,
+        idcentral,
+      };
+      console.log("📌 [Controller] UsuarioIdCentral recebido:", JSON.stringify(UsuarioIdCentral, null, 2));
+  
+      const service = new UsuarioServices();
+      const exists = await service.findByIdYD(UsuarioDTO.idYD);
+  
+      if (!exists) {
+        const usuario = await service.createUserAcess(UsuarioIdCentral);
+        await logExecution({
+          ip: ipusuario,
+          class: "UsuarioController",
+          function: "createbiometria",
+          process: "criação de novo acesso ok",
+          description: "sucess",
+        });
+        return reply.status(200).send({
+          task: "SUCESS",
+          resp: "criação de novo acesso ok",
+          usuario,
+        });
+      }
+  
+      const usuarios = await service.adicionarAcesso(UsuarioIdCentral);
+      await logExecution({
+        ip: ipusuario,
+        class: "UsuarioController",
+        function: "createbiometria",
+        process: "criação de biometria",
+        description: "sucess",
+      });
+      return reply.status(200).send({
+        task: "SUCESS",
+        resp: "criação de novo usuario ok",
+        usuarios,
+      });
+  
+    } catch (error: any) {
+      // Catch genérico (qualquer erro que não seja timeout já tratado)
+      console.error("Erro inesperado:", error);
+  
+      await logExecution({
+        ip: ipusuario,
+        class: "UsuarioController",
+        function: "createbiometria",
+        process: "Erro inesperado",
+        description: error.message ?? "Erro desconhecido",
+      });
+  
+      return reply.status(500).send({
+        task: "ERROR",
+        resp: "Erro interno no servidor.",
+      });
     }
   }
+  
   async list(request: FastifyRequest, reply: FastifyReply) {
     const ipusuario = request.ip
     const service = new UsuarioServices();
