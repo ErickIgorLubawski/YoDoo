@@ -129,13 +129,10 @@ async createUserAcess(data: UsuarioIdCentralDTO) {
     throw new Error('Número de centrais não corresponde ao número de equipamentos');
   }
 
-  // limpa idYD (remove letras, espaços, símbolos)
-  const cleanIdYD = data.idYD.replace(/\D/g, '');
-
   const acessosDocs: AcessoDoc[] = data.acessos.map((equipId, index) => ({
-    central: data.idcentral[index],
+    central: data.idcentral[index],   // 👈 agora cada equipamento recebe sua central correta
     equipamento: equipId,
-    user_idEquipamento: cleanIdYD, // 👈 já entra limpinho
+    user_idEquipamento: data.idYD,
     begin_time: data.begin_time,
     end_time: data.end_time,
   }));
@@ -143,14 +140,13 @@ async createUserAcess(data: UsuarioIdCentralDTO) {
   return prisma.usuarios.create({
     data: {
       name: data.name,
-      idYD: cleanIdYD, // 👈 salva só números
+      idYD: data.idYD,
       password: data.password,
       base64: data.base64,
       acessos: acessosDocs as any
     }
   });
 }
-
 async  adicionarAcesso(data: UsuarioIdCentralDTO) {
   // 1. Cria o novo acesso como objeto
   const novoAcesso: AcessoDoc = {
@@ -242,11 +238,12 @@ async atualizarAcessoEspecifico(data: UsuarioIdCentralDTO) {
   const usuario = await prisma.usuarios.findUnique({
     where: { idYD: data.idYD },
   });
+
   if (!usuario) {
     throw new Error("Usuário não encontrado");
   }
 
-  // 2) Monta o objeto de update, adicionando só o que vier
+  // 2) Atualiza dados gerais do usuário (parciais)
   const atualizacoes: any = {};
   if (data.name && data.name !== usuario.name) {
     atualizacoes.name = data.name;
@@ -258,42 +255,39 @@ async atualizarAcessoEspecifico(data: UsuarioIdCentralDTO) {
     atualizacoes.base64 = data.base64;
   }
 
-  // 3) Atualiza só o acesso desejado
-  const equipamentoAlvo = data.acessos[0]; // o equipamento que veio no body
-  // transforma o JSON em array tipado
-  const acessosOriginais = usuario.acessos as unknown as AcessoDoc[];
-  const acessosAtualizados = acessosOriginais.map(acesso => {
-    if (acesso.equipamento === equipamentoAlvo) {
-      return {
-        ...acesso,
-        // só sobrescreve estes campos
-        begin_time: data.begin_time ?? acesso.begin_time,
-        end_time:   data.end_time   ?? acesso.end_time,
-        central:    data.idcentral  ?? acesso.central,
-      };
-    }
-    return acesso;
-  });
+  // 3) Atualiza apenas o acesso específico informado
+  if (Array.isArray(data.acessos) && data.acessos.length > 0) {
+    const equipamentoAlvo = data.acessos[0]; // sempre 1 por update
+    const acessosOriginais = usuario.acessos as unknown as AcessoDoc[];
 
-  // 4) adiciona essa alteração ao objeto de update
-  atualizacoes.acessos = acessosAtualizados;
+    const acessosAtualizados = acessosOriginais.map(acesso => {
+      if (acesso.equipamento === equipamentoAlvo) {
+        return {
+          ...acesso,
+          begin_time: data.begin_time ?? acesso.begin_time,
+          end_time:   data.end_time   ?? acesso.end_time,
+          // garante que central continua string
+          central: data.idcentral
+            ? (Array.isArray(data.idcentral) ? data.idcentral[0] : data.idcentral)
+            : acesso.central,
+        };
+      }
+      return acesso;
+    });
 
-  // 5) Grava tudo de volta
+    atualizacoes.acessos = acessosAtualizados;
+  }
+
+  // 4) Persiste no banco
   const usuarioAtualizado = await prisma.usuarios.update({
     where: { idYD: data.idYD },
     data: atualizacoes,
   });
-  return {
-    id: usuarioAtualizado.id,
-    name: usuarioAtualizado.name,
-    idYD: usuarioAtualizado.idYD,
-    password: usuarioAtualizado.password,
-    acessos: usuarioAtualizado.acessos,
-    createdAt: usuarioAtualizado.createdAt,
-    updatedAt: usuarioAtualizado.updatedAt,
-    
-  }
+
+  return usuarioAtualizado;
 }
+
+
 async  atualizarUsuarioEAcessos(data: UsuarioIdCentralDTO) {
   const usuario = await prisma.usuarios.findUnique({
     where: { idYD: data.idYD },

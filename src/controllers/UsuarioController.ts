@@ -122,21 +122,9 @@ export class UsuarioController {
       if (centralResult.result.tasks.includes('ERROR')) {
           return reply.status(500).send({ task: "ERROR", resp: 'Ocorreu um erro na comunicação com o equipamento.' });
       }
-
-      // Para outros erros, podemos usar a sua lógica original com uma pequena adaptação.
-      // Verificamos se a string 'ERROR' aparece no array.
-      
-      
- //     const user_idEquipamento = centralResult.result.user_idDevice?.toString()
-      
-
-
+      //const user_idEquipamento = centralResult.result.user_idDevice?.toString()
       const idcentral = centralResult.idacessos
 
-
-      // console.log('status resposta da central: ',responseCentral)
-      // console.log('ID do usuario na central: ',user_idEquipamento)
-      // console.log('id da central: ',idcentral)
       const UsuarioIdCentral: UsuarioIdCentralDTO = {
         ...UsuarioDTO,
         idcentral, // mantém array mesmo!
@@ -269,43 +257,51 @@ export class UsuarioController {
     }
   }
   async update(request: FastifyRequest, reply: FastifyReply) {
-
-    const ipusuario = request.ip
+    const ipusuario = request.ip;
     const Usuario = request.body as UsuarioDTO;
-
-    if (!Usuario.idYD || !Usuario.acessos) {
-      return reply.status(400).send({ task: "ERROR", resp: 'preenhcer todos os campos' });
+  
+    if (!Usuario.idYD || !Usuario.acessos || Usuario.acessos.length === 0) {
+      return reply.status(400).send({ task: "ERROR", resp: "preencher idYD e pelo menos um acesso" });
     }
+  
     try {
       const serviceCentral = new RequestCentral();
       const centralResult = await serviceCentral.processarUsuarioCentral(Usuario, ipusuario, "PUT");
-
-      console.log('1 usuario no equipamento',centralResult)
-
-     // const user_idEquipamento = centralResult.result.user_idDevice?.toString()
-      const task = centralResult.result.tasks.toString()
-      const idcentral = centralResult.idacessos
+  
+      if (centralResult.result.tasks.toString().includes("ERROR")) {
+        return reply.status(500).send({ task: "ERROR", resp: "equipamento não encontrado" });
+      }
+  
       const UsuarioIdCentral: UsuarioIdCentralDTO = {
         ...Usuario,
-        idcentral: idcentral,
-        
+        idcentral: centralResult.idacessos, // sempre 1 central nesse fluxo
       };
-
-      console.log('payload', UsuarioIdCentral)
-
-      if (task.includes("ERROR")) {
-        return reply.status(500).send({ task: "ERROR", resp: 'equipamento não encontrada' });
-      }
+  
       const service = new UsuarioServices();
       const usuarios = await service.atualizarAcessoEspecifico(UsuarioIdCentral);
-      console.log('usuarios no equipamento', usuarios)
-      await logExecution({ ip: ipusuario, class: "UsuarioController", function: "update", process: "atualizar usuario", description: "sucess", });;
-      return reply.status(200).send({ task: "SUCESS.", resp: UsuarioIdCentral });
+  
+      await logExecution({
+        ip: ipusuario,
+        class: "UsuarioController",
+        function: "update",
+        process: "atualizar usuario",
+        description: "sucess",
+      });
+  
+      return reply.status(200).send({ task: "SUCESS.", resp: usuarios });
     } catch (error: any) {
-      await logExecution({ ip: ipusuario, class: "UsuarioController", function: "update", process: "atualizar usuario", description: "error", });;
-      return reply.status(500).send({ task: "ERROR", resp: 'cliente ou acesso não encontrado' });
+      await logExecution({
+        ip: ipusuario,
+        class: "UsuarioController",
+        function: "update",
+        process: "atualizar usuario",
+        description: "error",
+      });
+  
+      return reply.status(500).send({ task: "ERROR", resp: "cliente ou acesso não encontrado" });
     }
   }
+  
   async delete(request: FastifyRequest, reply: FastifyReply) {
 
     const ipusuario = request.ip

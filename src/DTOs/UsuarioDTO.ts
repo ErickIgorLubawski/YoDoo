@@ -12,7 +12,7 @@ export interface UsuarioDTO {
 }
 export interface UsuarioIdCentralDTO extends UsuarioDTO{
   user_idEquipamento?:   string
-  idcentral:             string
+  idcentral:             string[]
 }
 export interface AcessoDoc {
   central:              string;

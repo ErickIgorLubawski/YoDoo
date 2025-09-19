@@ -155,9 +155,7 @@ export class RequestCentral {
         }
         if (request.method === 'POST' || request.method === 'PUT') {
           user_idDevice = responseData.resp.acessos;
-        
         }
-
 
         await logExecution({ ip: iprequest, class: "RequestCentral", function: "sendAll", process: `${request.method} -> ${request.endpoint}`, description: `Status ${resp.status}`, });
       } catch (err: any) {
