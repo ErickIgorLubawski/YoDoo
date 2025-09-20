@@ -173,7 +173,7 @@ export class UsuarioController {
         });
         return reply.status(200).send({
           task: "SUCESS",
-          resp: "criação de novo acesso ok",
+          resp: "criação de ususario ok",
           usuario,
         });
       }
@@ -188,7 +188,7 @@ export class UsuarioController {
       });
       return reply.status(200).send({
         task: "SUCESS",
-        resp: "criação de novo usuario ok",
+        resp: "criação de novo acesso ok",
         usuarios,
       });
   
@@ -348,46 +348,74 @@ export class UsuarioController {
   }
   
   async delete(request: FastifyRequest, reply: FastifyReply) {
-
-    const ipusuario = request.ip
+    const ipusuario = request.ip;
     const { idYD, acessos } = request.body as UsuarioDTO;
+  
     if (!idYD) {
       return reply.status(400).send({ resp: "ID é obrigatório" });
     }
-
+  
     try {
       const payload = {
-        idYD: idYD,
-        acessos: acessos,
-        name: "", // Provide a default or fetch the actual value
-        password: "", // Provide a default or fetch the actual value
-        begin_time: "", // Provide a default or fetch the actual value
-        end_time: ""  // Provide a default or fetch the actual value
+        idYD,
+        acessos,
+        name: "",
+        password: "",
+        begin_time: "",
+        end_time: ""
       };
+  
       const serviceCentral = new RequestCentral();
       const centralResult = await serviceCentral.processarUsuarioCentral(payload, ipusuario, "DELETE");
-
-      const responseCentral = centralResult.result.tasks.toString()
+  
+      const responseCentral = centralResult.result.tasks.toString();
+  
+      console.log('central ',centralResult)
+      console.log('responseCentral ',responseCentral)
 
       if (responseCentral === "ERROR") {
-        return reply.status(200).send({ task: "ERROR", resp: 'equipamento não encontrada' });
+        return reply.status(200).send({ task: "ERROR", resp: "equipamento não encontrado" });
       }
+  
       const service = new UsuarioServices();
       const idYDusuario = await service.findByIdYD(idYD);
-
+  
       if (!idYDusuario) {
-        return reply.status(404).send({ task: "ERROR", resp: 'cliente não encontrado' });
+        return reply.status(404).send({ task: "ERROR", resp: "cliente não encontrado" });
       }
-      const usuario = await service.delete(idYD);
-
-       await logExecution({ ip: ipusuario, class: "UsuarioController", function: "delete", process: "deletar usuario", description: "sucess", });;
-      return reply.status(200).send({task: "SUCESS.", resp: usuario});
-
+  
+      let usuario;
+      if (acessos && acessos.length > 0) {
+        // apagar apenas os acessos
+        usuario = await service.deleteAcessos(idYD, acessos);
+      } else {
+        // apagar o usuário inteiro
+        usuario = await service.delete(idYD);
+      }
+  
+      await logExecution({
+        ip: ipusuario,
+        class: "UsuarioController",
+        function: "delete",
+        process: "deletar usuario",
+        description: "sucess",
+      });
+  
+      return reply.status(200).send({ task: "SUCESS", resp: usuario });
+  
     } catch (error: any) {
-       await logExecution({ ip: ipusuario, class: "UsuarioController", function: "delete", process: "deletar usuario", description: "error", });;
-      return reply.status(400).send({ task: "ERROR", resp: 'erro ao deletar cliente' });
+      await logExecution({
+        ip: ipusuario,
+        class: "UsuarioController",
+        function: "delete",
+        process: "deletar usuario",
+        description: "error",
+      });
+  
+      return reply.status(400).send({ task: "ERROR", resp: "erro ao deletar cliente" });
     }
   }
+  
   async createAdm(request: FastifyRequest, reply: FastifyReply) {
     const ipusuario = request.ip
 

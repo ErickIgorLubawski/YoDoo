@@ -123,6 +123,37 @@ async delete(idYD: string) {
     where: { idYD },
   });
 }
+async deleteAcessos(idYD: string, acessosParaRemover: string[]) {
+  const usuario = await prisma.usuarios.findUnique({
+    where: { idYD },
+  });
+
+  if (!usuario) {
+    throw new Error("Usuário não encontrado");
+  }
+
+  // acessos do usuário atual
+  const acessosAtuais = usuario.acessos as any[]; 
+
+  // filtra removendo os acessos que foram passados no payload
+  const novosAcessos = acessosAtuais.filter(
+    (a) => !acessosParaRemover.includes(a.equipamento)
+  );
+
+  // se não sobrar nenhum acesso, o correto é excluir o usuário inteiro
+  if (novosAcessos.length === 0) {
+    return this.delete(idYD);
+  }
+
+  // senão, só atualiza a lista de acessos
+  return await prisma.usuarios.update({
+    where: { idYD },
+    data: {
+      acessos: novosAcessos as any,
+    },
+  });
+}
+
 async createUserAcess(data: UsuarioIdCentralDTO) {
   console.log("📌 [Service] Dados recebidos em createUserAcess:", JSON.stringify(data, null, 2));
 

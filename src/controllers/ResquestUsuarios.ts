@@ -25,7 +25,9 @@ export class RequestCentral {
     if (method === "DELETE") {
       const usuarioSvc = new UsuarioServices();
       // Chama a nova função para obter a lista de IDs de equipamento dinamicamente.
-      data.acessos = await usuarioSvc.getEquipamentoIdsByUserIdYd(data.idYD);
+      if (!data.acessos || data.acessos.length === 0) {
+        data.acessos = await usuarioSvc.getEquipamentoIdsByUserIdYd(data.idYD);
+      }
     }
 
     // O restante do fluxo permanece IDÊNTICO, pois ele agora receberá os dados no formato correto.
@@ -122,6 +124,10 @@ export class RequestCentral {
     return { payloads, centralIds };
   }
   private async sendAll(payloads: Array<Payload<any>>, iprequest: string, centralIds: string[]) {
+
+    console.log("\n>>> Iniciando sendAll");
+    console.log("Payloads:", payloads);
+
     const tasks: any[] = [];
     let user_idDevice: any[] = [];
     const centralService = new CentralServices();
