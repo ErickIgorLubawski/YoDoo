@@ -27,17 +27,19 @@ export class EquipamentoController {
 
       //idcentral
       const servicecentral = new CentralServices();
-      console.log('ipcentralmrd: ', ipcentralmrd)
       const id = await servicecentral.searchIdCentral(ipcentralmrd);
       const central_id = id?.device_id.toString()
 
+      if (!central_id) {
+        return reply.status(404).send({ resp: "Central não encontrada no db." });
+      }
+      console.log('central_id: ', central_id)
     
       //Equipamentos do banco
       const serviceequipamento = new EquipamentoServices();
       const equipamentosdb = await serviceequipamento.list();
 
 
-      console.log('equipamentosdb: ', equipamentosdb)
 
       const idsBanco = new Set(equipamentosdb.map(e => e.device_id));
       // Filtrar apenas os equipamentos da central que NÃO estão no banco
@@ -49,6 +51,9 @@ export class EquipamentoController {
         await logExecution({ ip: iprequest, class: "EquipamentoController", function: "create", process: "nenhum novo equipamento", description: "nenhum novo para cadastrar", });
         return reply.status(200).send({ task: "SUCESS.", resp: listaEquipamentoscentral, message: "Nenhum novo equipamento cadastrado. Apenas retorno da central.", });
       }
+
+      console.log('novosEquipamentos: ', novosEquipamentos)
+      
       // Mapear os dados corretamente e salvar um a um
       for (const equip of novosEquipamentos) {
         await serviceequipamento.create({
@@ -60,6 +65,8 @@ export class EquipamentoController {
           status: 'online'
         });
       }
+
+
       await logExecution({ ip: iprequest, class: "EquipamentoController", function: "list", process: "list equipamento", description: "sucess", });;
       return reply.status(200).send({ task: "SUCESS.", resp: 'novos equipamentos criado no banco',novosEquipamentos });
     } catch (err: any) {

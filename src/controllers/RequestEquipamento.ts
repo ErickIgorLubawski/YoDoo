@@ -23,7 +23,7 @@ export class RequestEquipamento {
     try {
       //Podemos 
       console.log('IP da central:', ipcentralmrd)
-      const url = `http://${ipcentralmrd}/central`;
+      const url = `http://${ipcentralmrd}${process.env.PORTA_CENTRAL}/central`;
       console.log('URL:', url);
       const response = await axios.get(url);
       console.log('confirmação',response.data)

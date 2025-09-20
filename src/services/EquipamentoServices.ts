@@ -5,6 +5,7 @@ import { EquipamentoDTO,EquipamentoUpdateDTO } from "../DTOs/EquipamentoDTO";
 export class EquipamentoServices {
 
   async create(data: EquipamentoDTO) {
+    console.log('Dados recebidos para criação do equipamento:', data);
     return await prisma.equipamentos.create({ data });
   }
   async findByIdYD(device_id: string) {
