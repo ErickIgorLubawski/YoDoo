@@ -322,6 +322,12 @@ export class UsuarioController {
     if (!Usuario.idYD || !Usuario.acessos || Usuario.acessos.length === 0) {
       return reply.status(400).send({ task: "ERROR", resp: "preencher idYD e pelo menos um acesso" });
     }
+    if (!isValidDateTime(Usuario.begin_time) || !isValidDateTime(Usuario.end_time)) {
+      return reply.status(400).send({ 
+        task: "ERROR", 
+        resp: "Data inválida ou inexistente." 
+      });
+    }
   
     try {
       const serviceCentral = new RequestCentral();
