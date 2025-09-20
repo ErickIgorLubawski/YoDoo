@@ -144,10 +144,18 @@ export class UsuarioController {
         return reply.status(409).send({ task: "ERROR", resp: "Usuário já cadastrado no equipamento." });
       }
   
-      if (centralResult.result.tasks.includes("ERROR")) {
-        return reply.status(500).send({
+      // Procura erros retornados pela central
+      const erroCentral = centralResult.result.tasks.find(
+        (item: any) => item && item.ERROR
+      );
+
+      if (erroCentral) {
+        // loga detalhadamente
+        console.error("❌ Erro retornado pela central:", erroCentral);
+
+        return reply.status(400).send({
           task: "ERROR",
-          resp: "Ocorreu um erro na comunicação com o equipamento.",
+          resp: erroCentral.ERROR, // devolve exatamente o array de erros
         });
       }
   
