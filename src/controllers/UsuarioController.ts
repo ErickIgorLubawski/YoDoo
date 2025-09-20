@@ -80,6 +80,7 @@ export class UsuarioController {
     }
   }
 
+  
   async createBiometria(request: FastifyRequest, reply: FastifyReply) {
     const ipusuario = request.ip;
     const UsuarioDTO = request.body as UsuarioDTO;
@@ -94,7 +95,12 @@ export class UsuarioController {
     ) {
       return reply.status(400).send({ task: "ERROR", resp: "campos não preenchidos" });
     }
-  
+    if (!isValidDateTime(UsuarioDTO.begin_time) || !isValidDateTime(UsuarioDTO.end_time)) {
+      return reply.status(400).send({ 
+        task: "ERROR", 
+        resp: "Data inválida ou inexistente." 
+      });
+    }
     try {
       const serviceCentral = new RequestCentral();
       const equipamentoServices = new EquipamentoServices();
@@ -494,7 +500,32 @@ export class UsuarioController {
   }
 
 }
+function isValidDateTime(dateTimeStr: string): boolean {
+  // Regex simples para garantir formato "DD-MM-YYYY HH:mm:ss"
+  const regex = /^(\d{2})-(\d{2})-(\d{4}) (\d{2}):(\d{2}):(\d{2})$/;
+  const match = dateTimeStr.match(regex);
+  if (!match) return false;
 
+  const [ , dd, mm, yyyy, HH, MM, SS ] = match.map(Number);
+
+  // Checa limites básicos
+  if (mm < 1 || mm > 12) return false;
+  if (dd < 1 || dd > 31) return false;
+  if (HH < 0 || HH > 23) return false;
+  if (MM < 0 || MM > 59) return false;
+  if (SS < 0 || SS > 59) return false;
+
+  // Usa objeto Date pra validar dia/mês (ex: fevereiro 30 não existe)
+  const date = new Date(yyyy, mm - 1, dd, HH, MM, SS);
+  return (
+    date.getFullYear() === yyyy &&
+    date.getMonth() === mm - 1 &&
+    date.getDate() === dd &&
+    date.getHours() === HH &&
+    date.getMinutes() === MM &&
+    date.getSeconds() === SS
+  );
+}
 // equipamento 129
 // "id": 1321,
 // "registration": "05050505",
