@@ -16,8 +16,6 @@ export class RequestEquipamento {
       return {ServerResponse}
     }
   }
-
-
   async searchInfoCentral(ipcentralmrd: string) {
     
     try {
@@ -54,9 +52,6 @@ export class RequestEquipamento {
       return {ServerResponse}
     }
   }
-
-
-  
   async Status(ip: string): Promise<'online' | 'offline'> {
     try {
       const url = `http://${ip}/status`;

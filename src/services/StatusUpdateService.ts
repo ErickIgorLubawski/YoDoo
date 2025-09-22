@@ -22,7 +22,6 @@ export class StatusUpdateService {
       });
     }
   }
-
   private async updateCentraisStatus() {
     const centrais = await prisma.centrais.findMany({ select: { id: true, ip_VPN: true }});
     console.log('centrais do banco',centrais)
@@ -37,7 +36,6 @@ export class StatusUpdateService {
     });
     await Promise.allSettled(updatePromises);
   }
-
   private async updateEquipamentosStatus() {
     // ---- PASSO 1: CORRIGIR A BUSCA PARA INCLUIR 'device_id' ----
     const centrais = await prisma.centrais.findMany({

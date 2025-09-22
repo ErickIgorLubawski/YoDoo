@@ -19,7 +19,6 @@ export async function verifyToken(request: FastifyRequest, reply: FastifyReply) 
   }
 }
 
-
 // // src/middlewares/verifyToken.ts
 // import { FastifyRequest, FastifyReply } from 'fastify';
 // import jwt from 'jsonwebtoken';

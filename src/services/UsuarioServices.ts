@@ -6,7 +6,7 @@ import { logExecution } from '../utils/logger';
 
 export class UsuarioServices {
 
-  async findByName(name: string): Promise<UsuarioResumo[]> {
+async findByName(name: string): Promise<UsuarioResumo[]> {
     try {
       const usuarios = await prisma.usuarios.findMany({
         where: {
@@ -30,16 +30,13 @@ export class UsuarioServices {
       logExecution({ ip: 'N/A', class: "UsuarioServices", function: "findByName", process: "Busca por nome", description: `Erro ao buscar usuários por nome: ${error.message}` });
       throw new Error('Erro no serviço ao buscar usuários por nome.');
     }
-  }
-
-  
+}
 async createusuariobiometria(UsuarioDTO: UsuarioDTO) {
   return await prisma.usuarios.create({ data: UsuarioDTO });
 }
 async findByIdYD(idYD: string) {
   return await prisma.usuarios.findFirst({where: { idYD: idYD }});
 }
-
 async list() {
   return await prisma.usuarios.findMany({
     select: {
@@ -54,7 +51,6 @@ async list() {
     }
   });
 }
-
 async getEquipamentoIdsByUserIdYd(idYD: string) {
  try {
    // 1. Busca o usuário, mas seleciona APENAS o campo 'acessos' para otimizar a consulta.
@@ -80,7 +76,6 @@ async getEquipamentoIdsByUserIdYd(idYD: string) {
    throw new Error('Erro no serviço ao buscar os equipamentos do usuário.');
  }
 }
-
 async getById(idYD: string) {
   console.log('ID: ', idYD)
     return prisma.usuarios.findUnique({
@@ -185,7 +180,6 @@ async createUserAcess(data: UsuarioIdCentralDTO) {
     }
   });
 }
-
 async  adicionarAcesso(data: UsuarioIdCentralDTO) {
   // 1. Cria o novo acesso como objeto
   const novoAcesso: AcessoDoc = {
@@ -294,25 +288,28 @@ async atualizarAcessoEspecifico(data: UsuarioIdCentralDTO) {
     atualizacoes.base64 = data.base64;
   }
 
-  // 3) Atualiza apenas o acesso específico informado
+  // 3) Atualiza todos os acessos enviados
   if (Array.isArray(data.acessos) && data.acessos.length > 0) {
-    const equipamentoAlvo = data.acessos[0]; // sempre 1 por update
     const acessosOriginais = usuario.acessos as unknown as AcessoDoc[];
 
-    const acessosAtualizados = acessosOriginais.map(acesso => {
-      if (acesso.equipamento === equipamentoAlvo) {
-        return {
-          ...acesso,
-          begin_time: data.begin_time ?? acesso.begin_time,
-          end_time:   data.end_time   ?? acesso.end_time,
-          // garante que central continua string
-          central: data.idcentral
-            ? (Array.isArray(data.idcentral) ? data.idcentral[0] : data.idcentral)
-            : acesso.central,
-        };
-      }
-      return acesso;
-    });
+    // percorre cada acesso enviado e atualiza o correspondente no banco
+    let acessosAtualizados = [...acessosOriginais];
+
+    for (const acessoEnviado of data.acessos) {
+      acessosAtualizados = acessosAtualizados.map(acesso => {
+        if (acesso.equipamento === acessoEnviado) {
+          return {
+            ...acesso,
+            begin_time: data.begin_time ?? acesso.begin_time,
+            end_time:   data.end_time   ?? acesso.end_time,
+            central: data.idcentral
+              ? (Array.isArray(data.idcentral) ? data.idcentral[0] : data.idcentral)
+              : acesso.central,
+          };
+        }
+        return acesso;
+      });
+    }
 
     atualizacoes.acessos = acessosAtualizados;
   }
@@ -325,7 +322,6 @@ async atualizarAcessoEspecifico(data: UsuarioIdCentralDTO) {
 
   return usuarioAtualizado;
 }
-
 
 async  atualizarUsuarioEAcessos(data: UsuarioIdCentralDTO) {
   const usuario = await prisma.usuarios.findUnique({

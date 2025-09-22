@@ -11,24 +11,15 @@ const fastifyStatic = require('@fastify/static');
 const path = require('path');
 
 // Configuração de CORS para permitir preflight OPTIONS e envio de Authorization
-
-
-
-
 const app = Fastify({logger: true});
-
 app.register(fastifyStatic, {
     root: '/home/convidado/www/FrontEnd',
     prefix: '/',
     index: ['login.html'],
 });
-
-  
-
 app.setErrorHandler((error, request, reply) => {
     reply.status(400).send({ task: error.message });
 });
-
 const start = async () => {
 
     try {
@@ -58,5 +49,4 @@ const start = async () => {
     process.exit(1);
     }
 }
-
 start();

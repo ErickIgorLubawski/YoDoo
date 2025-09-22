@@ -35,8 +35,6 @@ export class EquipamentoServices {
   async delete(device_id: string) {
     return await prisma.equipamentos.delete({ where: { device_id } });
   }
-
-
   async getIpsAndCentralByDeviceIds(deviceIds: string[]){
       return prisma.equipamentos.findMany({
       where: {

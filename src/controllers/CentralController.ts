@@ -6,7 +6,6 @@ import { logExecution } from "../utils/logger";
 import { RequestEquipamento } from "./RequestEquipamento";
 
 export class CentralController {
-
   async create(request: FastifyRequest, reply: FastifyReply) {
 
     const iprequest = request.ip
@@ -53,7 +52,6 @@ export class CentralController {
       return reply.status(500).send({ resp: "Erro interno do servidor" });
     }
   }
-
   async list(request: FastifyRequest, reply: FastifyReply) {
 
     const iprequest = request.ip
@@ -93,8 +91,6 @@ export class CentralController {
         return reply.status(404).send({ task: "Central não encontrada" });
     }
   }
-
-
   async update(request: FastifyRequest, reply: FastifyReply) {
 
     const iprequest = request.ip

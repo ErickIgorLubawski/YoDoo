@@ -16,7 +16,6 @@ interface UsuarioToken {
 export class UsuarioController {
 
   private updateTriggerService = new UpdateTriggerService(); 
-
   async login(request: FastifyRequest, reply: FastifyReply) {
 
     //this.updateTriggerService.checkAndTriggerUpdate();
@@ -79,8 +78,6 @@ export class UsuarioController {
       return reply.status(500).send({ task: "ERROR", resp: 'Erro interno do servidor durante o processo de login.' });
     }
   }
-
-  
   async createBiometria(request: FastifyRequest, reply: FastifyReply) {
     const ipusuario = request.ip;
     const UsuarioDTO = request.body as UsuarioDTO;
@@ -187,7 +184,7 @@ export class UsuarioController {
         });
         return reply.status(200).send({
           task: "SUCESS",
-          resp: "criação de ususario ok",
+          resp: "criação de usuario ok",
           usuario,
         });
       }
@@ -224,7 +221,6 @@ export class UsuarioController {
       });
     }
   }
-  
   async list(request: FastifyRequest, reply: FastifyReply) {
     const ipusuario = request.ip
     const service = new UsuarioServices();
