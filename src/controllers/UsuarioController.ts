@@ -236,11 +236,11 @@ export class UsuarioController {
         const usuario = await service.list();
         console.log('usuarios', usuario)
         await logExecution({ ip: ipusuario, class: "UsuarioController", function: "list", process: "listar usuarios", description: "sucess", });;
-        return reply.status(200).send({ task: "SUCESS.", resp: usuario });
+        return reply.status(200).send({ task: "SUCESS", resp: usuario });
       }
       const usuarioid = await service.getById(idyd);
       await logExecution({ ip: ipusuario, class: "UsuarioController", function: "getById", process: "listar usuarios por id", description: "sucess", });;
-      return reply.status(200).send({ task: "SUCESS.", resp: usuarioid });
+      return reply.status(200).send({ task: "SUCESS", resp: usuarioid });
 
 
     } catch (error: any) {
@@ -322,26 +322,50 @@ export class UsuarioController {
     if (!Usuario.idYD || !Usuario.acessos || Usuario.acessos.length === 0) {
       return reply.status(400).send({ task: "ERROR", resp: "preencher idYD e pelo menos um acesso" });
     }
-    if (!isValidDateTime(Usuario.begin_time) || !isValidDateTime(Usuario.end_time)) {
-      return reply.status(400).send({ 
-        task: "ERROR", 
-        resp: "Data inválida ou inexistente." 
-      });
+    
+    if (Usuario.begin_time) {
+      if (!isValidDateTime(Usuario.begin_time)) {
+        return reply.status(400).send({
+          task: "ERROR",
+          resp: "Data inválida ou inexistente."
+        });
+      } 
+    }
+    if (Usuario.end_time) {
+      if (!isValidDateTime(Usuario.end_time)) {
+        return reply.status(400).send({
+          task: "ERROR",
+          resp: "Data inválida ou inexistente."
+        });
+      } 
     }
   
     try {
       const serviceCentral = new RequestCentral();
       const centralResult = await serviceCentral.processarUsuarioCentral(Usuario, ipusuario, "PUT");
   
-      if (centralResult.result.tasks.toString().includes("ERROR")) {
-        return reply.status(500).send({ task: "ERROR", resp: "equipamento não encontrado" });
-      }
-  
       const UsuarioIdCentral: UsuarioIdCentralDTO = {
         ...Usuario,
         idcentral: centralResult.idacessos, // sempre 1 central nesse fluxo
       };
-  
+
+      //Adicionado Amauri 22/09
+      const erroCentral = centralResult.result.tasks.find(
+        (item: any) => item && item.ERROR
+      );
+      
+      if (erroCentral) {
+        // loga detalhadamente
+        console.error("❌ Erro retornado pela central:", erroCentral);
+
+        return reply.status(400).send({
+          task: "ERROR",
+          resp: erroCentral.ERROR, // devolve exatamente o array de erros
+        });
+      }
+      //^^^^ Adicionado Amauri 22/09
+
+      //VVV BD VVVV
       const service = new UsuarioServices();
       const usuarios = await service.atualizarAcessoEspecifico(UsuarioIdCentral);
   
@@ -353,7 +377,7 @@ export class UsuarioController {
         description: "sucess",
       });
   
-      return reply.status(200).send({ task: "SUCESS.", resp: usuarios });
+      return reply.status(200).send({ task: "SUCESS", resp: usuarios });
     } catch (error: any) {
       await logExecution({
         ip: ipusuario,

@@ -7,7 +7,7 @@ export class RequestEquipamento {
   async searchInfoEquipamento(ipcentralmrd: any) {
     //const port = process.env.CENTRAL_PORT
     try {
-      const url = `http://${ipcentralmrd}:${process.env.PORTA_CENTRAL}/findEqs`;
+      const url = `http://${ipcentralmrd}/findEqs`;
       console.log('contrucão da URL: ',url);
       const response = await axios.get(url);
       console.log('resposta da central ', response.data);
@@ -23,7 +23,7 @@ export class RequestEquipamento {
     try {
       //Podemos 
       console.log('IP da central:', ipcentralmrd)
-      const url = `http://${ipcentralmrd}${process.env.PORTA_CENTRAL}/central`;
+      const url = `http://${ipcentralmrd}/central`;
       console.log('URL:', url);
       const response = await axios.get(url);
       console.log('confirmação',response.data)

@@ -1,12 +1,15 @@
-import { LogService } from "../services/LogService";
-import { LogDTO } from "../DTOs/LogDTO";
+import { LogService } from '../services/LogService';
+import pino from 'pino'; // Importe o pino
 
-const logger = new LogService();
-
-export const logExecution = async (log: LogDTO) => {
-  try {
-    await logger.createLog(log);
-  } catch (error) {
-    console.error("Erro ao registrar log:", error);
+const logService = new LogService();
+const logger = pino({
+  transport: {
+    target: 'pino-pretty'
   }
-};
+});
+
+export function logExecution(data: any) {
+  logService.createLog(data);
+  // Adicione esta linha para imprimir no console
+  logger.info(data);
+}

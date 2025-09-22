@@ -26,6 +26,7 @@ export interface CentralinfoDTO extends  CentralDTO{
     bairro?:            string;
     ip_local?:          string;
     ip_vpn?:            string;
+    ip_VPN?:            string;
     mac?:               string;
     version?:           string;
   }

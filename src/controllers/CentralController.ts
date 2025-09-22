@@ -105,11 +105,12 @@ export class CentralController {
     }
 
     try {
-
+      central.device_id = String(central.device_id);
       const service = new CentralServices();
       const responseDbCentral = await service.update(central);
 
       await logExecution({ ip: iprequest, class: "CentralController", function: "update", process: "atualiza central", description: "sucess", });;
+
       return reply.status(200).send({ task: "SUCESS.", resp: responseDbCentral });
     } catch (error: any) {
       await logExecution({ ip: iprequest, class: "CentralController", function: "update", process: "atualiza central", description: "error", });;

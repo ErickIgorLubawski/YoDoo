@@ -73,18 +73,55 @@ export class CentralServices {
     });
   }
   async update(data: CentralUpdateDTO) {
-    const { device_id, ...rest } = data;
+    const { device_id, ip_VPN, ipCentralMRD, ...rest } = data;
+
+    // 1. Determine qual IP será usado
+    const ipToUse = ipCentralMRD ?? ip_VPN;
+
+    // 2. Mapeie os dados de entrada para o formato do seu modelo Prisma
+    const updateData = {
+      ...rest, // Inclui os outros campos (nomeEdificio, numero, etc.)
+      ip_VPN: ipToUse, // Usa o IP decidido na etapa 1
+    };
     
+    /* Removido Amauri 21/09
     // Remove campos undefined do objeto
     const updateData = Object.fromEntries(
       Object.entries(rest).filter(([_, value]) => value !== undefined)
     );
+    */
 
-    // Atualiza o documento no MongoDB usando Prisma
-    return await prisma.centrais.update({
-      where: { device_id },
-      data: updateData,
-    });
+    /* Adiciona 21/09 Amauri */
+    try {
+      // Encontre o registro pelo device_id primeiro
+      const centralToUpdate = await prisma.centrais.findFirst({
+        where: { device_id },
+      });
+
+      // Se a central não for encontrada, retorne null ou lance um erro
+      if (!centralToUpdate) {
+        console.error(`Central com device_id ${device_id} não encontrada.`);
+        return null; // ou throw new Error('Central não encontrada');
+      }
+
+      // Agora, use o id real (ObjectId) para realizar a atualização
+      return await prisma.centrais.update({
+        where: { id: centralToUpdate.id }, // <--- AQUI ESTÁ A CHAVE
+        data: updateData,
+      });
+    } catch (error: any) {
+      // Lidar com erros de atualização, se houver
+      console.error("Erro ao atualizar a central:", error);
+      throw error;
+    }
+    /* Adiciona 21/09 Amauri */
+    /* Removido 21/09 Amauri
+      // Atualiza o documento no MongoDB usando Prisma
+      return await prisma.centrais.update({
+        where: { device_id },
+        data: updateData,
+      });
+    */
   }
   async delete(device_id: string) {
     return await prisma.centrais.delete({ where: { device_id } });
