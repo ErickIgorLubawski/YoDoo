@@ -16,14 +16,13 @@ export class EquipamentoController {
     if (!ipcentralmrd) {
       return reply.status(400).send({ task: "ERROR.", resp: 'Preencher ipcentralmrd: Params' });
     }
+    let listaEquipamentoscentral: any = null;
     try {
 
       //Equipamemtos da central
       const requestequipamento = new RequestEquipamento()
       const equipamentoscentral = await requestequipamento.searchInfoEquipamento(ipcentralmrd)
-      const listaEquipamentoscentral = equipamentoscentral?.resp?.ListadeEqs ?? [];
-
-      
+      listaEquipamentoscentral = equipamentoscentral?.resp?.ListadeEqs ?? [];
 
       //idcentral
       const servicecentral = new CentralServices();
@@ -39,8 +38,6 @@ export class EquipamentoController {
       const serviceequipamento = new EquipamentoServices();
       const equipamentosdb = await serviceequipamento.list();
 
-
-
       const idsBanco = new Set(equipamentosdb.map(e => e.device_id));
       // Filtrar apenas os equipamentos da central que NÃO estão no banco
       const novosEquipamentos = listaEquipamentoscentral.filter((eq: { device_id: string }) =>
@@ -49,7 +46,7 @@ export class EquipamentoController {
       if (novosEquipamentos.length === 0) {
         // Nenhum novo equipamento, retorna os da central
         await logExecution({ ip: iprequest, class: "EquipamentoController", function: "create", process: "nenhum novo equipamento", description: "nenhum novo para cadastrar", });
-        return reply.status(200).send({ task: "SUCESS.", resp: listaEquipamentoscentral, message: "Nenhum novo equipamento cadastrado. Apenas retorno da central.", });
+        return reply.status(200).send({ task: "SUCESS", resp: listaEquipamentoscentral, message: "Nenhum novo equipamento cadastrado. Apenas retorno da central.", });
       }
 
       console.log('novosEquipamentos: ', novosEquipamentos)
@@ -68,10 +65,14 @@ export class EquipamentoController {
 
 
       await logExecution({ ip: iprequest, class: "EquipamentoController", function: "list", process: "list equipamento", description: "sucess", });;
-      return reply.status(200).send({ task: "SUCESS.", resp: 'novos equipamentos criado no banco',novosEquipamentos });
+      return reply.status(200).send({ task: "SUCESS", resp: 'novos equipamentos criado no banco',novosEquipamentos });
     } catch (err: any) {
       await logExecution({ ip: iprequest, class: "EquipamentoController", function: "create", process: "cria equipamento", description: "error", });;
-      return reply.status(500).send({ resp: "ERROR" });
+      if (listaEquipamentoscentral && listaEquipamentoscentral.length > 0) {
+        return reply.status(500).send({ task: "ERROR", resp: "Erro ao criar equipamentos.", lista_da_central: listaEquipamentoscentral });
+      } else {
+        return reply.status(500).send({ task: "ERROR", resp: "Erro ao comunicar com a central ou obter dados." });
+      }
     }
   }
   async list(request: FastifyRequest, reply: FastifyReply) {

@@ -2,11 +2,12 @@ import { prisma } from '../config/db';
 import { UsuarioDTO, UsuarioIdCentralDTO,AcessoDoc, UsuarioComAcesso,UsuarioAdm,UsuarioResumo}  from "../DTOs/UsuarioDTO";
 import bcrypt from 'bcrypt';
 import { logExecution } from '../utils/logger';
+import { CentralServices } from './CentralServices';
 
 
 export class UsuarioServices {
 
-async findByName(name: string): Promise<UsuarioResumo[]> {
+  async findByName(name: string): Promise<UsuarioResumo[]> {
     try {
       const usuarios = await prisma.usuarios.findMany({
         where: {
@@ -30,13 +31,16 @@ async findByName(name: string): Promise<UsuarioResumo[]> {
       logExecution({ ip: 'N/A', class: "UsuarioServices", function: "findByName", process: "Busca por nome", description: `Erro ao buscar usuários por nome: ${error.message}` });
       throw new Error('Erro no serviço ao buscar usuários por nome.');
     }
-}
+  }
+
+  
 async createusuariobiometria(UsuarioDTO: UsuarioDTO) {
   return await prisma.usuarios.create({ data: UsuarioDTO });
 }
 async findByIdYD(idYD: string) {
   return await prisma.usuarios.findFirst({where: { idYD: idYD }});
 }
+
 async list() {
   return await prisma.usuarios.findMany({
     select: {
@@ -51,6 +55,7 @@ async list() {
     }
   });
 }
+
 async getEquipamentoIdsByUserIdYd(idYD: string) {
  try {
    // 1. Busca o usuário, mas seleciona APENAS o campo 'acessos' para otimizar a consulta.
@@ -76,6 +81,7 @@ async getEquipamentoIdsByUserIdYd(idYD: string) {
    throw new Error('Erro no serviço ao buscar os equipamentos do usuário.');
  }
 }
+
 async getById(idYD: string) {
   console.log('ID: ', idYD)
     return prisma.usuarios.findUnique({
@@ -150,23 +156,36 @@ async deleteAcessos(idYD: string, acessosParaRemover: string[]) {
 }
 
 async createUserAcess(data: UsuarioIdCentralDTO) {
+  //Refiz a função cadastrar para garantir que o valor do id da central permaneça no usuário 23/09
   console.log("📌 [Service] Dados recebidos em createUserAcess:", JSON.stringify(data, null, 2));
 
-  // garante que o tamanho de idcentral e acessos é o mesmo
-  // if (data.idcentral.length !== data.acessos.length) {
-  //   console.error("❌ [Service] Quantidade de centrais != quantidade de acessos");
-  //   console.error("idcentral:", data.idcentral);
-  //   console.error("acessos:", data.acessos);
-  //   throw new Error('Número de centrais não corresponde ao número de equipamentos');
-  // }
+  // Instancia o serviço de centrais
+  const centralService = new CentralServices();
 
-  const acessosDocs: AcessoDoc[] = data.acessos.map((equipId, index) => ({
-    central: data.idcentral[index],
-    equipamento: equipId,
-    user_idEquipamento: data.idYD,
-    begin_time: data.begin_time,
-    end_time: data.end_time,
-  }));
+  // Mapeia o array de equipamentos para um array de promessas de busca
+  const acessosDocsPromises = data.acessos.map(async (equipId) => {
+    // 1. Busca o equipamento para encontrar o ID da central
+    const equipamento = await prisma.equipamentos.findUnique({
+      where: { device_id: equipId },
+      select: { central_id: true }
+    });
+
+    if (!equipamento) {
+      throw new Error(`Equipamento com ID ${equipId} não encontrado.`);
+    }
+
+    // 2. Retorna o objeto de acesso com o ID da central encontrado
+    return {
+      central: equipamento.central_id,
+      equipamento: equipId,
+      user_idEquipamento: data.idYD,
+      begin_time: data.begin_time,
+      end_time: data.end_time,
+    };
+  });
+
+  // Aguarda a resolução de todas as promessas de busca
+  const acessosDocs = await Promise.all(acessosDocsPromises);
 
   console.log("📌 [Service] acessosDocs montado:", JSON.stringify(acessosDocs, null, 2));
 
@@ -180,6 +199,7 @@ async createUserAcess(data: UsuarioIdCentralDTO) {
     }
   });
 }
+
 async  adicionarAcesso(data: UsuarioIdCentralDTO) {
   // 1. Cria o novo acesso como objeto
   const novoAcesso: AcessoDoc = {
@@ -288,29 +308,27 @@ async atualizarAcessoEspecifico(data: UsuarioIdCentralDTO) {
     atualizacoes.base64 = data.base64;
   }
 
-  // 3) Atualiza todos os acessos enviados
+  // 3) Atualiza apenas o acesso específico informado
   if (Array.isArray(data.acessos) && data.acessos.length > 0) {
-    const acessosOriginais = usuario.acessos as unknown as AcessoDoc[];
+    // Transforma o array de acessos do banco em um mapa para facilitar a busca
+    const acessosMap = new Map((usuario.acessos as unknown as AcessoDoc[]).map(acesso => [acesso.equipamento, acesso]));
 
-    // percorre cada acesso enviado e atualiza o correspondente no banco
-    let acessosAtualizados = [...acessosOriginais];
+    // Itera sobre os equipamentos que vieram na requisição
+    for (const equipamentoAlvo of data.acessos) {
+      const acessoOriginal = acessosMap.get(equipamentoAlvo);
 
-    for (const acessoEnviado of data.acessos) {
-      acessosAtualizados = acessosAtualizados.map(acesso => {
-        if (acesso.equipamento === acessoEnviado) {
-          return {
-            ...acesso,
-            begin_time: data.begin_time ?? acesso.begin_time,
-            end_time:   data.end_time   ?? acesso.end_time,
-            central: data.idcentral
-              ? (Array.isArray(data.idcentral) ? data.idcentral[0] : data.idcentral)
-              : acesso.central,
-          };
-        }
-        return acesso;
-      });
+      if (acessoOriginal) {
+        // Atualiza o objeto de acesso no mapa
+        acessosMap.set(equipamentoAlvo, {
+          ...acessoOriginal,
+          begin_time: data.begin_time ?? acessoOriginal.begin_time,
+          end_time: data.end_time ?? acessoOriginal.end_time,
+        });
+      }
     }
 
+    // Converte o mapa de volta para um array
+    const acessosAtualizados = Array.from(acessosMap.values());
     atualizacoes.acessos = acessosAtualizados;
   }
 
@@ -322,6 +340,7 @@ async atualizarAcessoEspecifico(data: UsuarioIdCentralDTO) {
 
   return usuarioAtualizado;
 }
+
 
 async  atualizarUsuarioEAcessos(data: UsuarioIdCentralDTO) {
   const usuario = await prisma.usuarios.findUnique({
