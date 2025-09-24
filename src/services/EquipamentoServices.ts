@@ -19,6 +19,11 @@ export class EquipamentoServices {
   async getById(id: string) {
     return await prisma.equipamentos.findUnique({ where: { id } });
   }
+  async getByDeviceId(device_id: string) {
+    return await prisma.equipamentos.findUnique({
+      where: { device_id }
+    });
+  }
   async update(data: EquipamentoUpdateDTO) {
     const { device_id, ...rest } = data;
 

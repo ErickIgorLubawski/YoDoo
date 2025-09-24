@@ -25,6 +25,7 @@ export async function usuarioRoutes(fastify: FastifyInstance, options: FastifyPl
     privateRoutes.get("/usuariosname", controller.findByName.bind(controller));
 
     privateRoutes.post("/status/update", controller.triggerStatusUpdate.bind(controller));
+    privateRoutes.post("/espelhar", controller.espelhar.bind(controller));
 
     
    // privateRoutes.get("/usuarios", controller.list.bind(controller));

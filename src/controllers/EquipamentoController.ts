@@ -5,6 +5,7 @@ import { EquipamentoDTO, EquipamentoUpdateDTO,EquipamentoWithStatusDTO  } from "
 import { logExecution } from "../utils/logger";
 import { RequestEquipamento } from "../controllers/RequestEquipamento"
 import { CentralServices } from "../services/CentralServices";
+import { UsuarioServices } from "../services/UsuarioServices";
 
 export class EquipamentoController {
 
@@ -270,4 +271,7 @@ export class EquipamentoController {
       return reply.status(404).send({ resp: "Erro ao deletar equipamento." });
     }
   }
+
+  
+
 }

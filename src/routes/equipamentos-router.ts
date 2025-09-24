@@ -14,6 +14,7 @@ export async function equipamentoRoutes(fastify: FastifyInstance, options: Fasti
     privateRoutes.get("/equipamentosdb", controller.list.bind(controller));            //puxa do banco 
     privateRoutes.delete("/equipamentos", controller.delete.bind(controller));
     privateRoutes.put("/equipamentos", controller.update.bind(controller));
+
   });
 }
 

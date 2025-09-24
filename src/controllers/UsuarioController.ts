@@ -7,6 +7,7 @@ import { RequestCentral } from "./ResquestUsuarios";
 import { UpdateTriggerService } from '../services/UpdateTriggerService';
 import { EquipamentoServices } from '../services/EquipamentoServices';
 import { CentralServices } from '../services/CentralServices';
+import axios from 'axios';
 
 interface UsuarioToken {
   UsuarioAdminToken: string;
@@ -522,6 +523,99 @@ export class UsuarioController {
     } catch (error) {
       console.error('Erro ao acionar a atualização de status:', error);
       return reply.status(500).send({ error: 'Falha ao iniciar o processo de atualização.' });
+    }
+  }
+  async espelhar(request: FastifyRequest, reply: FastifyReply) {
+    const ipusuario = request.ip;
+    const { eqAntigo, eqNovo } = request.body as { eqAntigo: string; eqNovo: string };
+  
+    if (!eqAntigo || !eqNovo) {
+      return reply.status(400).send({ task: "ERROR", resp: "Informe eqAntigo e eqNovo" });
+    }
+  
+    try {
+      const usuarioService = new UsuarioServices();
+      const equipamentoService = new EquipamentoServices();
+      const centralService = new CentralServices();
+  
+      // 1) Busca todos os usuários do equipamento antigo
+      const usuarios = await usuarioService.findUsersByEquipamento(eqAntigo);
+      if (!usuarios || usuarios.length === 0) {
+        return reply.status(404).send({ task: "ERROR", resp: "Nenhum usuário encontrado no equipamento antigo" });
+      }
+  
+
+
+      // 2) Busca dados do equipamento novo
+      const eqNovoData = await equipamentoService.getByDeviceId(eqNovo);
+      if (!eqNovoData) {
+        return reply.status(404).send({ task: "ERROR", resp: "Equipamento novo não encontrado" });
+      }
+  
+      // 3) Busca IP da central do eqNovo
+      const centralNovo = await centralService.getByDeviceIds([eqNovoData.central_id]);
+      if (!centralNovo || centralNovo.length === 0 || !centralNovo[0].ip_VPN) {
+        return reply.status(404).send({ task: "ERROR", resp: "Central do equipamento novo não encontrada" });
+      }
+  
+      const centralIp = centralNovo[0].ip_VPN;
+      const equipamentoIpNovo = eqNovoData.ip;
+  
+      // 4) Monta a lista de usuários adaptada pro novo equipamento
+      const userList = usuarios.map(u => ({
+        name: u.name,
+        idYD: u.idYD,
+        base64: u.base64,
+        acessos: [
+          {
+            central: eqNovoData.central_id,
+            equipamento: eqNovo,
+            user_idEquipamento: u.idYD,
+            begin_time: u.acessos[0]?.begin_time ,
+            end_time:   u.acessos[0]?.end_time
+          }
+        ]
+      }));
+  
+      const payload = {
+        acesso: equipamentoIpNovo,
+        userList
+      };
+  
+      // 5) Envia a lista para a central via axios
+      const resp = await axios.post(`http://${centralIp}/cadListClientes`, payload, {
+        timeout: 30000
+      });
+  
+      // 6) Loga sucesso
+      await logExecution({
+        ip: ipusuario,
+        class: "UsuarioController",
+        function: "espelhar",
+        process: `Espelhamento ${eqAntigo} -> ${eqNovo}`,
+        description: `Status ${resp.status}`
+      });
+  
+      return reply.status(200).send({
+        task: "SUCESS",
+        resp: resp.data
+      });
+  
+    } catch (error: any) {
+      console.error("❌ Erro no espelhamento:", error);
+  
+      await logExecution({
+        ip: ipusuario,
+        class: "UsuarioController",
+        function: "espelhar",
+        process: "Erro no espelhamento",
+        description: error.message ?? "Erro desconhecido"
+      });
+  
+      return reply.status(500).send({
+        task: "ERROR",
+        resp: "Erro ao tentar espelhar usuários"
+      });
     }
   }
 
