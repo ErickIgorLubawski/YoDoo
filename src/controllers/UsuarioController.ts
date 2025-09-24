@@ -586,7 +586,36 @@ export class UsuarioController {
       const resp = await axios.post(`http://${centralIp}/cadListClientes`, payload, {
         timeout: 30000
       });
-  
+// 4.1) Atualiza o equipamento antigo para o novo nos usuários
+for (const u of usuarios) {
+  try {
+    // Mapeia os acessos do usuário, substituindo eqAntigo por eqNovo
+    const acessosAtualizados = (u.acessos as any[]).map(acesso => {
+      if (acesso.equipamento === eqAntigo) {
+        return {
+          ...acesso,
+          equipamento: eqNovo
+        };
+      }
+      return acesso;
+    });
+
+    // Atualiza o usuário no banco
+    await usuarioService.atualizarUsuarioEAcessos({
+      idYD: u.idYD,
+      acessos: acessosAtualizados.map(a => a.equipamento),
+      idcentral: eqNovoData.central_id,
+      begin_time: acessosAtualizados[0]?.begin_time,
+      end_time: acessosAtualizados[0]?.end_time,
+      name: u.name,
+      base64: u.base64,
+      password: u.password
+    });
+  } catch (error) {
+    console.error(`Erro ao atualizar usuário ${u.idYD}:`, error);
+  }
+}
+
       // 6) Loga sucesso
       await logExecution({
         ip: ipusuario,
