@@ -604,7 +604,7 @@ for (const u of usuarios) {
     await usuarioService.atualizarUsuarioEAcessos({
       idYD: u.idYD,
       acessos: acessosAtualizados.map(a => a.equipamento),
-      idcentral: eqNovoData.central_id,
+      idcentral: [eqNovoData.central_id],
       begin_time: acessosAtualizados[0]?.begin_time,
       end_time: acessosAtualizados[0]?.end_time,
       name: u.name,
