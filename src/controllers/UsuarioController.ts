@@ -19,7 +19,7 @@ export class UsuarioController {
   private updateTriggerService = new UpdateTriggerService(); 
   async login(request: FastifyRequest, reply: FastifyReply) {
 
-    //this.updateTriggerService.checkAndTriggerUpdate();
+    this.updateTriggerService.checkAndTriggerUpdate();
 
 
     const ipusuario = request.ip; // Captura o IP para logging
