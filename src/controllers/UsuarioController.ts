@@ -184,7 +184,7 @@ export class UsuarioController {
           description: "sucess",
         });
         return reply.status(200).send({
-          task: "SUCESS",
+          task: "SUCCESS",
           resp: "criação de usuario ok",
           usuario,
         });
@@ -196,10 +196,10 @@ export class UsuarioController {
         class: "UsuarioController",
         function: "createbiometria",
         process: "criação de biometria",
-        description: "sucess",
+        description: "SUCCESS",
       });
       return reply.status(200).send({
-        task: "SUCESS",
+        task: "SUCCESS",
         resp: "criação de novo acesso ok",
         usuarios,
       });
@@ -232,12 +232,12 @@ export class UsuarioController {
       if (!idyd) {
         const usuario = await service.list();
         console.log('usuarios', usuario)
-        await logExecution({ ip: ipusuario, class: "UsuarioController", function: "list", process: "listar usuarios", description: "sucess", });;
-        return reply.status(200).send({ task: "SUCESS", resp: usuario });
+        await logExecution({ ip: ipusuario, class: "UsuarioController", function: "list", process: "listar usuarios", description: "SUCCESS", });;
+        return reply.status(200).send({ task: "SUCCESS", resp: usuario });
       }
       const usuarioid = await service.getById(idyd);
-      await logExecution({ ip: ipusuario, class: "UsuarioController", function: "getById", process: "listar usuarios por id", description: "sucess", });;
-      return reply.status(200).send({ task: "SUCESS", resp: usuarioid });
+      await logExecution({ ip: ipusuario, class: "UsuarioController", function: "getById", process: "listar usuarios por id", description: "SUCCESS", });;
+      return reply.status(200).send({ task: "SUCCESS", resp: usuarioid });
 
 
     } catch (error: any) {
@@ -258,8 +258,8 @@ export class UsuarioController {
       if (!usuario) {
         return reply.status(404).send({ resp: "Cliente não encontrado(a)" });
       }
-      await logExecution({ ip: ipusuario, class: "UsuarioController", function: "listId", process: "listar usuario por id", description: "sucess", });;
-      return reply.status(200).send({ task: "SUCESS", resp: usuario });
+      await logExecution({ ip: ipusuario, class: "UsuarioController", function: "listId", process: "listar usuario por id", description: "SUCCESS", });;
+      return reply.status(200).send({ task: "SUCCESS", resp: usuario });
     } catch (error: any) {
       await logExecution({ ip: ipusuario, class: "UsuarioController", function: "listId", process: "listar usuario por id", description: "error", });;
       return reply.status(404).send({ task: "ERROR", resp: 'cliente não encontrado' });
@@ -282,8 +282,8 @@ export class UsuarioController {
       if (!usuariosnoequipamento) {
         return reply.status(404).send({ resp: "Cliente não encontrado(a)" });
       }
-      await logExecution({ ip: ipusuario, class: "UsuarioController", function: "listusers", process: "listar usuario no equipamento", description: "sucess", });;
-      return reply.status(200).send({ task: "SUCESS", resp: usuariosnoequipamento });
+      await logExecution({ ip: ipusuario, class: "UsuarioController", function: "listusers", process: "listar usuario no equipamento", description: "SUCCESS", });;
+      return reply.status(200).send({ task: "SUCCESS", resp: usuariosnoequipamento });
     } catch (error: any) {
       await logExecution({ ip: ipusuario, class: "UsuarioController", function: "listusers", process: "listar usuario no equipamento", description: "error", });;
       return reply.status(404).send({ task: "ERROR", resp: 'cliente não encontrado' });
@@ -305,8 +305,8 @@ export class UsuarioController {
       if (!usuarioncentral) {
          return reply.status(404).send({ resp: "Nenhum cliente nessa central" });
        }
-      await logExecution({ ip: ipusuario, class: "UsuarioController", function: "listusers", process: "listar usuario no equipamento", description: "sucess", });;
-      return reply.status(200).send({ task: "SUCESS", resp: usuarioncentral });
+      await logExecution({ ip: ipusuario, class: "UsuarioController", function: "listusers", process: "listar usuario no equipamento", description: "SUCCESS", });;
+      return reply.status(200).send({ task: "SUCCESS", resp: usuarioncentral });
     } catch (error: any) {
       await logExecution({ ip: ipusuario, class: "UsuarioController", function: "listusers", process: "listar usuario no equipamento", description: "error", });;
       return reply.status(404).send({ task: "ERROR", resp: 'central não encontrado' });
@@ -371,10 +371,10 @@ export class UsuarioController {
         class: "UsuarioController",
         function: "update",
         process: "atualizar usuario",
-        description: "sucess",
+        description: "SUCCESS",
       });
   
-      return reply.status(200).send({ task: "SUCESS", resp: usuarios });
+      return reply.status(200).send({ task: "SUCCESS", resp: usuarios });
     } catch (error: any) {
       await logExecution({
         ip: ipusuario,
@@ -439,10 +439,10 @@ export class UsuarioController {
         class: "UsuarioController",
         function: "delete",
         process: "deletar usuario",
-        description: "sucess",
+        description: "SUCCESS",
       });
   
-      return reply.status(200).send({ task: "SUCESS", resp: usuario });
+      return reply.status(200).send({ task: "SUCCESS", resp: usuario });
   
     } catch (error: any) {
       await logExecution({
@@ -475,8 +475,8 @@ export class UsuarioController {
       if (!newUsuario) {
         return reply.status(400).send({ task: "ERROR", resp: 'erro ao cadastrar usuario' });
       }
-      await logExecution({ ip: ipusuario, class: "UsuarioController", function: "createAdm", process: "criação de novo adm", description: "sucess", });;
-      return reply.status(200).send({ task: "SUCESS", resp: 'criação de novo adm ok', usuario: newUsuario });
+      await logExecution({ ip: ipusuario, class: "UsuarioController", function: "createAdm", process: "criação de novo adm", description: "SUCCESS", });;
+      return reply.status(200).send({ task: "SUCCESS", resp: 'criação de novo adm ok', usuario: newUsuario });
       
     } catch (error: any) {
       await logExecution({ ip: ipusuario, class: "UsuarioController", function: "createAdm", process: "criar usuario adm", description: "error", });;
@@ -499,11 +499,11 @@ export class UsuarioController {
   
       if (usuarios.length === 0) {
         await logExecution({ ip: ipusuario, class: "UsuarioController", function: "findByName", process: "Busca por nome", description: `Nenhum usuário encontrado com o termo: '${name}'`, });
-        return reply.status(404).send({ task: "SUCESS", resp: [] }); // Retorna 200 com array vazio ou 404
+        return reply.status(404).send({ task: "SUCCESS", resp: [] }); // Retorna 200 com array vazio ou 404
       }
   
       await logExecution({ ip: ipusuario, class: "UsuarioController", function: "findByName", process: "Busca por nome", description: `Busca por '${name}' realizada com sucesso.`, });
-      return reply.status(200).send({ task: "SUCESS.", resp: usuarios });
+      return reply.status(200).send({ task: "SUCCESS", resp: usuarios });
   
     } catch (error: any) {
       await logExecution({ ip: ipusuario, class: "UsuarioController", function: "findByName", process: "Busca por nome", description: `Erro ao buscar usuários: ${error.message}`, });
@@ -544,8 +544,6 @@ export class UsuarioController {
         return reply.status(404).send({ task: "ERROR", resp: "Nenhum usuário encontrado no equipamento antigo" });
       }
   
-
-
       // 2) Busca dados do equipamento novo
       const eqNovoData = await equipamentoService.getByDeviceId(eqNovo);
       if (!eqNovoData) {
@@ -586,35 +584,37 @@ export class UsuarioController {
       const resp = await axios.post(`http://${centralIp}/cadListClientes`, payload, {
         timeout: 30000
       });
-// 4.1) Atualiza o equipamento antigo para o novo nos usuários
-for (const u of usuarios) {
-  try {
-    // Mapeia os acessos do usuário, substituindo eqAntigo por eqNovo
-    const acessosAtualizados = (u.acessos as any[]).map(acesso => {
-      if (acesso.equipamento === eqAntigo) {
-        return {
-          ...acesso,
-          equipamento: eqNovo
-        };
-      }
-      return acesso;
-    });
+      // 5.1) Atualiza o equipamento antigo para o novo nos usuários
+      for (const u of usuarios) {
+        try {
+          // Mapeia os acessos do usuário, substituindo eqAntigo por eqNovo
+          const acessosAtuais = (u.acessos as unknown as any[]) || [];
 
-    // Atualiza o usuário no banco
-    await usuarioService.atualizarUsuarioEAcessos({
-      idYD: u.idYD,
-      acessos: acessosAtualizados.map(a => a.equipamento),
-      idcentral: [eqNovoData.central_id],
-      begin_time: acessosAtualizados[0]?.begin_time,
-      end_time: acessosAtualizados[0]?.end_time,
-      name: u.name,
-      base64: u.base64,
-      password: u.password
-    });
-  } catch (error) {
-    console.error(`Erro ao atualizar usuário ${u.idYD}:`, error);
-  }
-}
+          const novoAcesso = {
+            central: eqNovoData.central_id,
+            equipamento: eqNovoData.device_id,
+            user_idEquipamento: u.idYD,
+            begin_time: u.acessos[0]?.begin_time, // Pega do primeiro acesso, ou usa um valor padrão
+            end_time: u.acessos[0]?.end_time,
+          };
+          
+          const todosAcessos = [...acessosAtuais, novoAcesso];
+          // Atualiza o usuário no banco
+          const dadosParaAtualizar = {
+            idYD: u.idYD,
+            name: u.name,
+            password: u.password,
+            begin_time: u.acessos[0]?.begin_time,
+            end_time: u.acessos[0]?.end_time,
+            idcentral: [eqNovoData.central_id], // Passa o ID da nova central
+            acessos: todosAcessos,
+          };
+          
+          await usuarioService.atualizarUsuarioEAcessos(dadosParaAtualizar);
+        } catch (error) {
+          console.error(`Erro ao atualizar usuário ${u.idYD}:`, error);
+        }
+      }
 
       // 6) Loga sucesso
       await logExecution({
@@ -626,7 +626,7 @@ for (const u of usuarios) {
       });
   
       return reply.status(200).send({
-        task: "SUCESS",
+        task: "SUCCESS",
         resp: resp.data
       });
   
