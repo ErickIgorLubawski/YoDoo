@@ -46,7 +46,7 @@ export class CentralController {
       };
       const responseDbCentral = await service.create(completeCenter);
       await logExecution({ ip: iprequest, class: "CentralController", function: "create", process: "Criação da central", description: "sucess", });;
-      return reply.status(200).send({ task: "SUCESS.", resp: responseDbCentral });
+      return reply.status(200).send({ task: "SUCCESS", resp: responseDbCentral });
     } catch (error: any) {
       await logExecution({ ip: iprequest, class: "CentralController", function: "create", process: "Criação da central", description: "error", });;
       return reply.status(500).send({ resp: "Erro interno do servidor" });
@@ -77,15 +77,15 @@ export class CentralController {
         //   })
         // );
 
-        await logExecution({ ip: iprequest, class: "CentralController", function: "list", process: "lista todas as centrais", description: "sucess", });;
-        return reply.status(200).send({ task: "SUCESS.", resp: centrals });
+        await logExecution({ ip: iprequest, class: "CentralController", function: "list", process: "lista todas as centrais", description: "SUCCESS", });;
+        return reply.status(200).send({ task: "SUCCESS", resp: centrals });
       }
 
       const service = new CentralServices();
       const central = await service.getById(device_id);
 
-      await logExecution({ ip: iprequest, class: "CentralController", function: "getById", process: "lista central por id", description: "sucess", });;
-        return reply.status(200).send({ task: "SUCESS.", resp: central });
+      await logExecution({ ip: iprequest, class: "CentralController", function: "getById", process: "lista central por id", description: "SUCCESS", });;
+        return reply.status(200).send({ task: "SUCCESS", resp: central });
     } catch (error: any) {
       await logExecution({ ip: iprequest, class: "CentralController", function: "getById", process: "lista central por id", description: "error", });;
         return reply.status(404).send({ task: "Central não encontrada" });
@@ -105,9 +105,9 @@ export class CentralController {
       const service = new CentralServices();
       const responseDbCentral = await service.update(central);
 
-      await logExecution({ ip: iprequest, class: "CentralController", function: "update", process: "atualiza central", description: "sucess", });;
+      await logExecution({ ip: iprequest, class: "CentralController", function: "update", process: "atualiza central", description: "SUCCESS", });;
 
-      return reply.status(200).send({ task: "SUCESS.", resp: responseDbCentral });
+      return reply.status(200).send({ task: "SUCCESS", resp: responseDbCentral });
     } catch (error: any) {
       await logExecution({ ip: iprequest, class: "CentralController", function: "update", process: "atualiza central", description: "error", });;
       return reply.status(404).send({ resp: "Central não encontrada" });
@@ -126,8 +126,8 @@ export class CentralController {
         return reply.status(404).send({ resp: "Central não encontrada" });
       }
       const deleted = await service.delete(Central.device_id)
-      await logExecution({ ip: iprequest, class: "CentralController", function: "delete", process: "deleta central", description: "sucess", });;
-        return reply.status(200).send({task: "SUCESS", data: deleted});
+      await logExecution({ ip: iprequest, class: "CentralController", function: "delete", process: "deleta central", description: "SUCCESS", });;
+        return reply.status(200).send({task: "SUCCESS", data: deleted});
     } catch (error: any) {
       await logExecution({ ip: iprequest, class: "CentralController", function: "delete", process: "deleta central", description: "error", });;
         return reply.status(400).send({ resp: "Erro ao deletar central." });

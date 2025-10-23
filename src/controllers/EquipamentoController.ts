@@ -15,7 +15,7 @@ export class EquipamentoController {
     const { ipcentralmrd } = request.query as { ipcentralmrd: string };
 
     if (!ipcentralmrd) {
-      return reply.status(400).send({ task: "ERROR.", resp: 'Preencher ipcentralmrd: Params' });
+      return reply.status(400).send({ task: "ERROR", resp: 'Preencher ipcentralmrd: Params' });
     }
     let listaEquipamentoscentral: any = null;
     try {
@@ -47,7 +47,7 @@ export class EquipamentoController {
       if (novosEquipamentos.length === 0) {
         // Nenhum novo equipamento, retorna os da central
         await logExecution({ ip: iprequest, class: "EquipamentoController", function: "create", process: "nenhum novo equipamento", description: "nenhum novo para cadastrar", });
-        return reply.status(200).send({ task: "SUCESS", resp: listaEquipamentoscentral, message: "Nenhum novo equipamento cadastrado. Apenas retorno da central.", });
+        return reply.status(200).send({ task: "SUCCESS", resp: listaEquipamentoscentral, message: "Nenhum novo equipamento cadastrado. Apenas retorno da central.", });
       }
 
       console.log('novosEquipamentos: ', novosEquipamentos)
@@ -65,8 +65,8 @@ export class EquipamentoController {
       }
 
 
-      await logExecution({ ip: iprequest, class: "EquipamentoController", function: "list", process: "list equipamento", description: "sucess", });;
-      return reply.status(200).send({ task: "SUCESS", resp: 'novos equipamentos criado no banco',novosEquipamentos });
+      await logExecution({ ip: iprequest, class: "EquipamentoController", function: "list", process: "list equipamento", description: "SUCCESS", });;
+      return reply.status(200).send({ task: "SUCCESS", resp: 'novos equipamentos criado no banco',novosEquipamentos });
     } catch (err: any) {
       await logExecution({ ip: iprequest, class: "EquipamentoController", function: "create", process: "cria equipamento", description: "error", });;
       if (listaEquipamentoscentral && listaEquipamentoscentral.length > 0) {
@@ -87,15 +87,15 @@ export class EquipamentoController {
       if (central_id) {
         const equipamentosnacentral = await equipamentoService.findByCentralId(central_id);
         console.log(equipamentosnacentral)
-        return reply.status(200).send({ task: "SUCESS.", resp: equipamentosnacentral });
+        return reply.status(200).send({ task: "SUCCESS", resp: equipamentosnacentral });
       }
       const service = new EquipamentoServices();
       const list = await service.list();
-      await logExecution({ ip: iprequest, class: "EquipamentoController", function: "list", process: "list equipamento", description: "sucess", });;
+      await logExecution({ ip: iprequest, class: "EquipamentoController", function: "list", process: "list equipamento", description: "SUCCESS", });;
 
-      return reply.status(200).send({ task: "SUCESS.", resp: list });
+      return reply.status(200).send({ task: "SUCCESS", resp: list });
     } catch (err: any) {
-      await logExecution({ ip: iprequest, class: "EquipamentoController", function: "list", process: "list equipamento", description: "sucess", });;
+      await logExecution({ ip: iprequest, class: "EquipamentoController", function: "list", process: "list equipamento", description: "SUCCESS", });;
       return reply.status(500).send({ resp: "Erro ao listar equipamentos." });
     }
   }
@@ -109,8 +109,8 @@ export class EquipamentoController {
   //   try {
   //     const service = new EquipamentoServices();
   //     const equipmento = await service.getById(id);
-  //     await logExecution({ ip: iprequest, class: "EquipamentoController", function: "getById", process: "lista equipamento por id ", description: "sucess", });;
-  //     return reply.status(200).send({ task: "SUCESS.", resp: equipmento });
+  //     await logExecution({ ip: iprequest, class: "EquipamentoController", function: "getById", process: "lista equipamento por id ", description: "SUCCESS", });;
+  //     return reply.status(200).send({ task: "SUCCESS.", resp: equipmento });
   //   } catch (err: any) {
   //     await logExecution({ ip: iprequest, class: "EquipamentoController", function: "getById", process: "lista equipamento por id ", description: "error", });;
   //     return reply.status(404).send({ resp: err.message });
@@ -131,8 +131,8 @@ export class EquipamentoController {
           return reply.status(404).send({ resp: 'Equipamento não encontrado.' });
         }
 
-        await logExecution({ip: ipRequest,class: 'EquipamentoController',function: 'getByDeviceId', process: 'lista equipamento por id',description: 'sucess'});
-        return reply.status(200).send({ task: 'SUCESS.', resp: equipamento });
+        await logExecution({ip: ipRequest,class: 'EquipamentoController',function: 'getByDeviceId', process: 'lista equipamento por id',description: 'SUCCESS'});
+        return reply.status(200).send({ task: 'SUCCESS', resp: equipamento });
 
       } catch (err: any) {
         await logExecution({ ip: ipRequest,class: 'EquipamentoController', function: 'getByDeviceId',process: 'lista equipamento por id',description: 'error'
@@ -186,9 +186,9 @@ export class EquipamentoController {
           })
         );
 
-      await logExecution({ ip: ipRequest,class: 'EquipamentoController',function: 'listEquipamentos', process: 'lista todos equipamentos com status',description: 'sucess' });
+      await logExecution({ ip: ipRequest,class: 'EquipamentoController',function: 'listEquipamentos', process: 'lista todos equipamentos com status',description: 'SUCCESS' });
 
-    //  return reply.status(200).send({ task: 'SUCESS.', resp: equipamentosWithStatus });
+    //  return reply.status(200).send({ task: 'SUCCESS.', resp: equipamentosWithStatus });
 
     } catch (err: any) {
       await logExecution({ip: ipRequest,class: 'EquipamentoController',function: 'listEquipamentos',process: 'erro ao listar equipamentos',description: 'error' });
@@ -241,11 +241,11 @@ export class EquipamentoController {
 
       const equipamentoupdatdb = await service.update(equipamento);
 
-      await logExecution({ ip: iprequest, class: "EquipamentoController", function: "update", process: "atualiza equipamento", description: "sucess", });;
-       return reply.status(200).send({ task: "SUCESS.", resp: equipamentoupdatdb});
+      await logExecution({ ip: iprequest, class: "EquipamentoController", function: "update", process: "atualiza equipamento", description: "SUCCESS", });;
+       return reply.status(200).send({ task: "SUCCESS", resp: equipamentoupdatdb});
     } catch (err: any) {
       await logExecution({ ip: iprequest, class: "EquipamentoController", function: "update", process: "atualiza equipamento", description: "error", });;
-      return reply.status(404).send({ task: "ERROR.",resp: "Equipamento não encontrado." });
+      return reply.status(404).send({ task: "ERROR",resp: "Equipamento não encontrado." });
     }
   }
   async delete(request: FastifyRequest, reply: FastifyReply) {
@@ -264,8 +264,8 @@ export class EquipamentoController {
       }
       const deleted = await service.delete(device_id);
 
-      await logExecution({ ip: iprequest, class: "EquipamentoController", function: "delete", process: "deleta equipamento", description: "sucess", });;
-      return reply.status(200).send({ task: "SUCESS", resp: deleted });
+      await logExecution({ ip: iprequest, class: "EquipamentoController", function: "delete", process: "deleta equipamento", description: "SUCCESS", });;
+      return reply.status(200).send({ task: "SUCCESS", resp: deleted });
     } catch (err: any) {
       await logExecution({ ip: iprequest, class: "EquipamentoController", function: "delete", process: "deleta equipamento", description: "error", });;
       return reply.status(404).send({ resp: "Erro ao deletar equipamento." });

@@ -364,14 +364,15 @@ async  atualizarUsuarioEAcessos(data: UsuarioIdCentralDTO) {
 
   // 3. Substitui o array de acessos, se enviado
   if (Array.isArray(data.acessos) && data.acessos.length > 0) {
+    /*
     const novosAcessos: AcessoDoc[] = data.acessos.map((equipId, index) => ({
       central: Array.isArray(data.idcentral) ? data.idcentral[index] : data.idcentral,
       equipamento: equipId,
       begin_time: data.begin_time,
       end_time: data.end_time,
-    }));
+    }));*/
 
-    atualizacoes.acessos = novosAcessos;
+    atualizacoes.acessos = data.acessos; // novosAcessos;
   }
 
   // 4. Atualiza no banco
