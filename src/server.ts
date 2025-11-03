@@ -13,7 +13,7 @@ const path = require('path');
 // Configuração de CORS para permitir preflight OPTIONS e envio de Authorization
 const app = Fastify({logger: true});
 app.register(fastifyStatic, {
-    root: '/home/convidado/www/FrontEnd',
+    root: '/home/ubuntu/www/FrontEnd/Frontend_YouDo/',
     prefix: '/',
     index: ['login.html'],
 });
