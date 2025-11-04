@@ -89,6 +89,7 @@ async getById(idYD: string) {
       select: {
         id: true,
         name: true,
+        base64: true,
         idYD: true,
         password: true,
         acessos: true,
@@ -469,6 +470,7 @@ async findCentralUsers(deviceId: string) {
           _id: 0,
           name: 1,
           idYD: 1,
+          base64: 1,
           // CORREÇÃO: Converte o campo de data para uma string no formato ISO 8601
           createdAt: { 
               $dateToString: { 
